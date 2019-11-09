@@ -1,0 +1,28 @@
+WHITESPACE = _{ " " | "\n" }
+
+identifier = { ('a'..'z')+ }
+
+typ = { 'A'..'Z' ~ ASCII_ALPHANUMERIC* }
+
+column = { identifier ~ ": " ~ typ }
+
+columns = { column ~ ("," ~ column)* ~ ","? }
+
+tydef = { typ }
+
+table = { "table" ~ tydef }
+
+int = @{
+    "-"?
+    ~ (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*)
+}
+
+bool = { "true" | "false" }
+
+expr = { int | bool }
+
+insert = { "insert" ~ expr }
+
+select = { "select" }
+
+statement = _{ SOI ~ (insert | select) ~ EOI }
