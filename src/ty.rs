@@ -1,9 +1,21 @@
 use crate::ast::*;
 
-pub fn unify(expr: &Expr, tabledef: &TableDefinition) -> bool {
-    match (expr, &tabledef.tydef) {
-        (Expr::Int(_), TyDef(Ty::Int)) => true,
-        (Expr::Bool(_), TyDef(Ty::Bool)) => true,
+pub fn unify(expr: &Expr, ty: &Ty) -> bool {
+    match (expr, ty) {
+        (Expr::Int(_), Ty::Int) => true,
+        (Expr::Bool(_), Ty::Bool) => true,
         _ => false,
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn unify_test() {
+        assert!(unify(&Expr::Int(42), &Ty::Int));
+        assert!(!unify(&Expr::Int(42), &Ty::Bool));
+        assert!(unify(&Expr::Bool(true), &Ty::Bool));
     }
 }

@@ -35,7 +35,7 @@ where
 
         match ast {
             Statement::Insert(expr) => {
-                if unify(&expr, &tabledef) {
+                if unify(&expr, &tabledef.ty) {
                     let result = eval(expr);
                     table.push(result);
                     writer.write_all(b"Inserted 1\n")?;

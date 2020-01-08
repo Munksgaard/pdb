@@ -5,11 +5,8 @@ pub enum Ty {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct TyDef(pub Ty);
-
-#[derive(Debug, PartialEq)]
 pub struct TableDefinition {
-    pub tydef: TyDef,
+    pub ty: Ty,
 }
 
 #[derive(Debug, PartialEq)]

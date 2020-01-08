@@ -2,15 +2,12 @@ WHITESPACE = _{ " " | "\n" }
 
 identifier = { ('a'..'z')+ }
 
-typ = { 'A'..'Z' ~ ASCII_ALPHANUMERIC* }
 
-column = { identifier ~ ": " ~ typ }
+tyident = { 'A'..'Z' ~ ASCII_ALPHANUMERIC* }
 
-columns = { column ~ ("," ~ column)* ~ ","? }
+ty = { tyident }
 
-tydef = { typ }
-
-table = { "table" ~ tydef }
+table = { "table" ~ ty }
 
 int = @{
     "-"?

@@ -9,7 +9,7 @@ pub struct Parser;
 
 fn parse_ty(pair: Pair<Rule>) -> Result<Ty, Error<Rule>> {
     match pair.as_rule() {
-        Rule::typ => match pair.as_str() {
+        Rule::tyident => match pair.as_str() {
             "Int" => Ok(Ty::Int),
             "Bool" => Ok(Ty::Bool),
             x => Err(Error::new_from_span(
@@ -19,21 +19,9 @@ fn parse_ty(pair: Pair<Rule>) -> Result<Ty, Error<Rule>> {
                 pair.as_span(),
             )),
         },
-        _ => Err(Error::new_from_span(
+        r => Err(Error::new_from_span(
             pest::error::ErrorVariant::CustomError {
-                message: "Unexpected rule, expected ty".to_string(),
-            },
-            pair.as_span(),
-        )),
-    }
-}
-
-fn parse_tydef(pair: Pair<Rule>) -> Result<TyDef, Error<Rule>> {
-    match pair.as_rule() {
-        Rule::tydef => Ok(TyDef(parse_ty(pair.into_inner().next().unwrap())?)),
-        _ => Err(Error::new_from_span(
-            pest::error::ErrorVariant::CustomError {
-                message: "Unexpected rule, expected tydef".to_string(),
+                message: format!("Unexpected rule {:?}, expected tyindent or tytuple", r),
             },
             pair.as_span(),
         )),
@@ -45,9 +33,17 @@ pub fn parse_tabledef(input: &str) -> Result<TableDefinition, Error<Rule>> {
 
     let pair = parsed.into_inner().next().unwrap();
 
-    Ok(TableDefinition {
-        tydef: parse_tydef(pair)?,
-    })
+    let ty = match pair.as_rule() {
+        Rule::ty => parse_ty(pair.into_inner().next().unwrap()),
+        _ => Err(Error::new_from_span(
+            pest::error::ErrorVariant::CustomError {
+                message: "Unexpected rule, expected ty".to_string(),
+            },
+            pair.as_span(),
+        )),
+    }?;
+
+    Ok(TableDefinition { ty: ty })
 }
 
 fn parse_expr(pair: Pair<Rule>) -> Result<Expr, Error<Rule>> {
@@ -99,16 +95,22 @@ mod test {
         use super::Ty;
 
         assert_eq!(
-            TableDefinition {
-                tydef: TyDef(Ty::Int)
-            },
+            TableDefinition { ty: Ty::Int },
             parse_tabledef("table Int").unwrap()
         );
 
         assert_eq!(
-            TableDefinition {
-                tydef: TyDef(Ty::Bool)
-            },
+            TableDefinition { ty: Ty::Bool },
+            parse_tabledef("table Bool").unwrap()
+        );
+
+        assert_eq!(
+            TableDefinition { ty: Ty::Int },
+            parse_tabledef("table Int").unwrap()
+        );
+
+        assert_eq!(
+            TableDefinition { ty: Ty::Bool },
             parse_tabledef("table Bool").unwrap()
         );
     }
