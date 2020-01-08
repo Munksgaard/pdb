@@ -6,5 +6,6 @@ pub fn eval(expr: Expr) -> Object {
         Expr::Int(i) => Object::Int(i),
         Expr::Bool(b) => Object::Bool(b),
         Expr::Tuple(exprs) => Object::Tuple(exprs.clone().into_iter().map(eval).collect()),
+        Expr::Unit => Object::Unit,
     }
 }

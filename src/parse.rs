@@ -24,6 +24,7 @@ fn parse_ty(pair: Pair<Rule>) -> Result<Ty, Error<Rule>> {
                 .map(|x| parse_ty(x.into_inner().next().unwrap()))
                 .collect::<Result<Vec<_>, _>>()?,
         )),
+        Rule::unit => Ok(Ty::Unit),
         r => Err(Error::new_from_span(
             pest::error::ErrorVariant::CustomError {
                 message: format!("Unexpected rule {:?}, expected tyindent or tytuple", r),
@@ -61,6 +62,7 @@ fn parse_expr(pair: Pair<Rule>) -> Result<Expr, Error<Rule>> {
                 .map(parse_expr)
                 .collect::<Result<Vec<_>, _>>()?,
         )),
+        Rule::unit => Ok(Expr::Unit),
         r => Err(Error::new_from_span(
             pest::error::ErrorVariant::CustomError {
                 message: format!("Unexpected rule {:?}, expected expr", r),
@@ -96,11 +98,6 @@ mod test {
     use super::*;
 
     #[test]
-    fn table_parsing() {
-        assert!(Parser::parse(Rule::table, "table ()").is_err());
-    }
-
-    #[test]
     fn parse_tabledef_test() {
         use super::Ty;
 
@@ -127,6 +124,11 @@ mod test {
             },
             parse_tabledef("table (Bool, Int, (Int, Int,))").unwrap()
         );
+
+        assert_eq!(
+            TableDefinition { ty: Ty::Unit },
+            parse_tabledef("table ()").unwrap()
+        );
     }
 
     #[test]
@@ -152,6 +154,8 @@ mod test {
             ))),
             parse("insert (false, true, 42)").unwrap()
         );
+
+        assert_eq!(Statement::Insert(Expr::Unit), parse("insert ()").unwrap());
 
         assert_eq!(Statement::Select, parse("select").unwrap());
     }

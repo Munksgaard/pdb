@@ -7,6 +7,7 @@ pub fn unify(expr: &Expr, ty: &Ty) -> bool {
         (Expr::Tuple(exprs), Ty::Tuple(tys)) => {
             exprs.iter().zip(tys.iter()).all(|(x, y)| unify(x, y))
         }
+        (Expr::Unit, Ty::Unit) => true,
         _ => false,
     }
 }

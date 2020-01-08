@@ -5,6 +5,7 @@ pub enum Object {
     Int(i64),
     Bool(bool),
     Tuple(Vec<Object>),
+    Unit,
 }
 
 impl fmt::Display for Object {
@@ -26,6 +27,7 @@ impl fmt::Display for Object {
 
                 write!(f, ")")
             }
+            Object::Unit => write!(f, "()"),
         }
     }
 }

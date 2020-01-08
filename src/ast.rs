@@ -3,6 +3,7 @@ pub enum Ty {
     Int,
     Bool,
     Tuple(Vec<Ty>),
+    Unit,
 }
 
 #[derive(Debug, PartialEq)]
@@ -15,6 +16,7 @@ pub enum Expr {
     Int(i64),
     Bool(bool),
     Tuple(Vec<Expr>),
+    Unit,
 }
 
 #[derive(Debug, PartialEq)]
