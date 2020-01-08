@@ -4,6 +4,7 @@ use std::fmt;
 pub enum Object {
     Int(i64),
     Bool(bool),
+    Tuple(Vec<Object>),
 }
 
 impl fmt::Display for Object {
@@ -11,6 +12,20 @@ impl fmt::Display for Object {
         match self {
             Object::Int(i) => write!(f, "{}", i),
             Object::Bool(b) => write!(f, "{}", b),
+            Object::Tuple(objs) => {
+                let mut objs = objs.iter();
+                write!(f, "(")?;
+
+                if let Some(obj) = objs.next() {
+                    write!(f, "{}", obj)?;
+                }
+
+                for obj in objs {
+                    write!(f, ", {}", obj)?;
+                }
+
+                write!(f, ")")
+            }
         }
     }
 }

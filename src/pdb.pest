@@ -2,10 +2,11 @@ WHITESPACE = _{ " " | "\n" }
 
 identifier = { ('a'..'z')+ }
 
+tytuple = { "(" ~ ty ~ ("," ~ ty)+ ~ ","? ~ ")" }
 
 tyident = { 'A'..'Z' ~ ASCII_ALPHANUMERIC* }
 
-ty = { tyident }
+ty = { tytuple | tyident }
 
 table = { "table" ~ ty }
 
@@ -16,7 +17,9 @@ int = @{
 
 bool = { "true" | "false" }
 
-expr = { int | bool }
+tuple = { "(" ~ expr ~ ("," ~ expr)+ ~ ","? ~ ")" }
+
+expr = { tuple | int | bool }
 
 insert = { "insert" ~ expr }
 

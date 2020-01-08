@@ -19,6 +19,11 @@ fn parse_ty(pair: Pair<Rule>) -> Result<Ty, Error<Rule>> {
                 pair.as_span(),
             )),
         },
+        Rule::tytuple => Ok(Ty::Tuple(
+            pair.into_inner()
+                .map(|x| parse_ty(x.into_inner().next().unwrap()))
+                .collect::<Result<Vec<_>, _>>()?,
+        )),
         r => Err(Error::new_from_span(
             pest::error::ErrorVariant::CustomError {
                 message: format!("Unexpected rule {:?}, expected tyindent or tytuple", r),
@@ -51,6 +56,11 @@ fn parse_expr(pair: Pair<Rule>) -> Result<Expr, Error<Rule>> {
     match expr.as_rule() {
         Rule::int => Ok(Expr::Int(expr.as_str().parse().unwrap())),
         Rule::bool => Ok(Expr::Bool(expr.as_str().parse().unwrap())),
+        Rule::tuple => Ok(Expr::Tuple(
+            expr.into_inner()
+                .map(parse_expr)
+                .collect::<Result<Vec<_>, _>>()?,
+        )),
         r => Err(Error::new_from_span(
             pest::error::ErrorVariant::CustomError {
                 message: format!("Unexpected rule {:?}, expected expr", r),
@@ -105,13 +115,17 @@ mod test {
         );
 
         assert_eq!(
-            TableDefinition { ty: Ty::Int },
-            parse_tabledef("table Int").unwrap()
+            TableDefinition {
+                ty: Ty::Tuple(vec!(Ty::Bool, Ty::Int))
+            },
+            parse_tabledef("table (Bool, Int)").unwrap()
         );
 
         assert_eq!(
-            TableDefinition { ty: Ty::Bool },
-            parse_tabledef("table Bool").unwrap()
+            TableDefinition {
+                ty: Ty::Tuple(vec!(Ty::Bool, Ty::Int, Ty::Tuple(vec!(Ty::Int, Ty::Int))))
+            },
+            parse_tabledef("table (Bool, Int, (Int, Int,))").unwrap()
         );
     }
 
@@ -128,6 +142,15 @@ mod test {
         assert_eq!(
             Statement::Insert(Expr::Bool(false)),
             parse("insert false").unwrap()
+        );
+
+        assert_eq!(
+            Statement::Insert(Expr::Tuple(vec!(
+                Expr::Bool(false),
+                Expr::Bool(true),
+                Expr::Int(42)
+            ))),
+            parse("insert (false, true, 42)").unwrap()
         );
 
         assert_eq!(Statement::Select, parse("select").unwrap());
