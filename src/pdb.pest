@@ -1,14 +1,16 @@
 WHITESPACE = _{ " " | "\n" }
 
-identifier = { ('a'..'z')+ }
+identifier = @{ 'a'..'z' ~ ASCII_ALPHANUMERIC* }
 
 unit = { "()" }
 
 tytuple = { "(" ~ ty ~ ("," ~ ty)+ ~ ","? ~ ")" }
 
-tyident = { 'A'..'Z' ~ ASCII_ALPHANUMERIC* }
+tyrecord = { "{" ~ identifier ~ ":" ~ ty ~ ("," ~ identifier ~ ":" ~ ty)* ~ ","? ~ "}" }
 
-ty = { unit | tytuple | tyident }
+tyident = @{ 'A'..'Z' ~ ASCII_ALPHANUMERIC* }
+
+ty = { unit | tytuple | tyrecord | tyident }
 
 table = { "table" ~ ty }
 
@@ -21,7 +23,9 @@ bool = { "true" | "false" }
 
 tuple = { "(" ~ expr ~ ("," ~ expr)+ ~ ","? ~ ")" }
 
-expr = { unit | tuple | int | bool }
+record = { "{" ~ identifier ~ "=" ~ expr ~ ("," ~ identifier ~ "=" ~ expr)* ~ ","? ~ "}" }
+
+expr = { unit | tuple | record | int | bool }
 
 insert = { "insert" ~ expr }
 

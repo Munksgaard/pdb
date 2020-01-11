@@ -1,11 +1,24 @@
 use crate::ast::*;
 use pest::error::Error;
-use pest::iterators::Pair;
+use pest::iterators::{Pair, Pairs};
 use pest::Parser as _;
 
 #[derive(Parser)]
 #[grammar = "pdb.pest"]
 pub struct Parser;
+
+fn parse_tyrecord(mut pairs: Pairs<Rule>) -> Result<Ty, Error<Rule>> {
+    let mut xs = Vec::new();
+
+    while let Some(ident) = pairs.next() {
+        let ty = parse_ty(pairs.next().unwrap().into_inner().next().unwrap())?;
+        xs.push((ident.as_str().to_owned(), ty));
+    }
+
+    xs.sort_by(|(x, _), (y, _)| x.cmp(y));
+
+    Ok(Ty::Record(xs))
+}
 
 fn parse_ty(pair: Pair<Rule>) -> Result<Ty, Error<Rule>> {
     match pair.as_rule() {
@@ -25,9 +38,13 @@ fn parse_ty(pair: Pair<Rule>) -> Result<Ty, Error<Rule>> {
                 .collect::<Result<Vec<_>, _>>()?,
         )),
         Rule::unit => Ok(Ty::Unit),
+        Rule::tyrecord => parse_tyrecord(pair.into_inner()),
         r => Err(Error::new_from_span(
             pest::error::ErrorVariant::CustomError {
-                message: format!("Unexpected rule {:?}, expected tyindent or tytuple", r),
+                message: format!(
+                    "Unexpected rule {:?}, expected tyindent, tyrecord, unit or tytuple",
+                    r
+                ),
             },
             pair.as_span(),
         )),
@@ -52,6 +69,19 @@ pub fn parse_tabledef(input: &str) -> Result<TableDefinition, Error<Rule>> {
     Ok(TableDefinition { ty: ty })
 }
 
+fn parse_record(mut pairs: Pairs<Rule>) -> Result<Expr, Error<Rule>> {
+    let mut xs = Vec::new();
+
+    while let Some(ident) = pairs.next() {
+        let expr = parse_expr(pairs.next().unwrap())?;
+        xs.push((ident.as_str().to_owned(), expr));
+    }
+
+    xs.sort_by(|(x, _), (y, _)| x.cmp(y));
+
+    Ok(Expr::Record(xs))
+}
+
 fn parse_expr(pair: Pair<Rule>) -> Result<Expr, Error<Rule>> {
     let expr = pair.into_inner().next().unwrap();
     match expr.as_rule() {
@@ -63,6 +93,7 @@ fn parse_expr(pair: Pair<Rule>) -> Result<Expr, Error<Rule>> {
                 .collect::<Result<Vec<_>, _>>()?,
         )),
         Rule::unit => Ok(Expr::Unit),
+        Rule::record => parse_record(expr.into_inner()),
         r => Err(Error::new_from_span(
             pest::error::ErrorVariant::CustomError {
                 message: format!("Unexpected rule {:?}, expected expr", r),
@@ -129,6 +160,16 @@ mod test {
             TableDefinition { ty: Ty::Unit },
             parse_tabledef("table ()").unwrap()
         );
+
+        assert_eq!(
+            TableDefinition {
+                ty: Ty::Record(vec!(
+                    (String::from("x"), Ty::Bool),
+                    (String::from("y"), Ty::Int)
+                ))
+            },
+            parse_tabledef("table { y : Int, x : Bool }").unwrap()
+        );
     }
 
     #[test]
@@ -156,6 +197,14 @@ mod test {
         );
 
         assert_eq!(Statement::Insert(Expr::Unit), parse("insert ()").unwrap());
+
+        assert_eq!(
+            Statement::Insert(Expr::Record(vec!(
+                (String::from("x"), Expr::Bool(false)),
+                (String::from("y"), Expr::Int(42)),
+            ))),
+            parse("insert { y = 42, x = false, }").unwrap()
+        );
 
         assert_eq!(Statement::Select, parse("select").unwrap());
     }

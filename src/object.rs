@@ -1,3 +1,5 @@
+use crate::ast::Ident;
+
 use std::fmt;
 
 #[derive(Debug, PartialEq)]
@@ -6,6 +8,7 @@ pub enum Object {
     Bool(bool),
     Tuple(Vec<Object>),
     Unit,
+    Record(Vec<(Ident, Object)>),
 }
 
 impl fmt::Display for Object {
@@ -28,6 +31,20 @@ impl fmt::Display for Object {
                 write!(f, ")")
             }
             Object::Unit => write!(f, "()"),
+            Object::Record(pairs) => {
+                let mut pairs = pairs.iter();
+                write!(f, "{{")?;
+
+                if let Some((ident, obj)) = pairs.next() {
+                    write!(f, "{} = {}", ident, obj)?;
+                }
+
+                for (ident, obj) in pairs {
+                    write!(f, ", {} = {}", ident, obj)?;
+                }
+
+                write!(f, "}}")
+            }
         }
     }
 }

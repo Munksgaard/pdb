@@ -1,9 +1,12 @@
+pub type Ident = String;
+
 #[derive(Debug, PartialEq)]
 pub enum Ty {
     Int,
     Bool,
     Tuple(Vec<Ty>),
     Unit,
+    Record(Vec<(Ident, Ty)>),
 }
 
 #[derive(Debug, PartialEq)]
@@ -17,6 +20,7 @@ pub enum Expr {
     Bool(bool),
     Tuple(Vec<Expr>),
     Unit,
+    Record(Vec<(Ident, Expr)>),
 }
 
 #[derive(Debug, PartialEq)]
