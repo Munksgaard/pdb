@@ -25,5 +25,6 @@ mod test {
             &Expr::Tuple(vec!(Expr::Bool(true), Expr::Int(42))),
             &Ty::Tuple(vec!(Ty::Bool, Ty::Int))
         ));
+        assert!(unify(&Expr::Unit, &Ty::Unit));
     }
 }

@@ -9,3 +9,19 @@ pub fn eval(expr: Expr) -> Object {
         Expr::Unit => Object::Unit,
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn eval_test() {
+        assert_eq!(eval(Expr::Int(42)), Object::Int(42));
+        assert_eq!(eval(Expr::Bool(true)), Object::Bool(true));
+        assert_eq!(
+            eval(Expr::Tuple(vec!(Expr::Bool(false), Expr::Int(43)))),
+            Object::Tuple(vec!(Object::Bool(false), Object::Int(43)))
+        );
+        assert_eq!(eval(Expr::Unit), Object::Unit);
+    }
+}
