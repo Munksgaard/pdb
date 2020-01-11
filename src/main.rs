@@ -13,15 +13,3 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-
-// fn main() -> Result<(), Box<dyn std::error::Error>> {
-//     let ty = parse::parse_tabledef("table Int")?;
-
-//     println!("{:?}", ty);
-
-//     let expr = parse::parse("insert 123");
-
-//     println!("{:?}", expr);
-
-//     Ok(())
-// }
