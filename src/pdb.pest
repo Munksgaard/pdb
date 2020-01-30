@@ -12,8 +12,6 @@ tyident = @{ 'A'..'Z' ~ ASCII_ALPHANUMERIC* }
 
 ty = { unit | tytuple | tyrecord | tyident }
 
-table = { "table" ~ ty }
-
 int = @{
     "-"?
     ~ (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*)
