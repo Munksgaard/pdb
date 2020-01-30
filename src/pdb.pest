@@ -27,8 +27,10 @@ record = { "{" ~ identifier ~ "=" ~ expr ~ ("," ~ identifier ~ "=" ~ expr)* ~ ",
 
 expr = { unit | tuple | record | int | bool }
 
-insert = { "insert" ~ expr }
+insert = { "insert" ~ expr ~ "into" ~ identifier }
 
-select = { "select" }
+select = { "select" ~ "from" ~ identifier }
 
-statement = _{ SOI ~ (insert | select) ~ EOI }
+create = { "create" ~ "table" ~ identifier ~ ty }
+
+statement = _{ SOI ~ (create | insert | select) ~ EOI }

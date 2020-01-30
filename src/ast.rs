@@ -25,6 +25,7 @@ pub enum Expr {
 
 #[derive(Debug, PartialEq)]
 pub enum Statement {
-    Insert(Expr),
-    Select,
+    Create(Ident, TableDefinition),
+    Insert(Ident, Expr),
+    Select(Ident),
 }
