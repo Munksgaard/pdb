@@ -209,6 +209,30 @@ mod test {
     }
 
     #[test]
+    fn parse_insert_negative_int() {
+        assert_eq!(
+            Statement::Insert(String::from("x"), Expr::Int(-42)),
+            parse("insert -42 into x").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_insert_0() {
+        assert_eq!(
+            Statement::Insert(String::from("x"), Expr::Int(0)),
+            parse("insert 0 into x").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_insert_negative_0() {
+        assert_eq!(
+            Statement::Insert(String::from("x"), Expr::Int(0)),
+            parse("insert -0 into x").unwrap()
+        )
+    }
+
+    #[test]
     fn parse_insert_bool() {
         assert_eq!(
             Statement::Insert(String::from("x"), Expr::Bool(false)),
@@ -246,6 +270,20 @@ mod test {
                 ))
             ),
             parse("insert { y = 42, x = false, } into x").unwrap()
+        );
+    }
+
+    #[test]
+    fn parse_insert_record_2() {
+        assert_eq!(
+            Statement::Insert(
+                String::from("bar"),
+                Expr::Record(vec!(
+                    (String::from("x"), Expr::Int(0)),
+                    (String::from("y"), Expr::Int(42)),
+                ))
+            ),
+            parse("insert { y = 42, x = 0 } into bar").unwrap()
         );
     }
 
