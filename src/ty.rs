@@ -21,15 +21,35 @@ mod test {
     use super::*;
 
     #[test]
-    fn unify_test() {
+    fn unify_int() {
         assert!(unify(&Expr::Int(42), &Ty::Int));
+    }
+
+    #[test]
+    fn unify_int_bool_fails() {
         assert!(!unify(&Expr::Int(42), &Ty::Bool));
+    }
+
+    #[test]
+    fn unify_bool() {
         assert!(unify(&Expr::Bool(true), &Ty::Bool));
+    }
+
+    #[test]
+    fn unify_tuple() {
         assert!(unify(
             &Expr::Tuple(vec!(Expr::Bool(true), Expr::Int(42))),
             &Ty::Tuple(vec!(Ty::Bool, Ty::Int))
         ));
+    }
+
+    #[test]
+    fn unify_unit() {
         assert!(unify(&Expr::Unit, &Ty::Unit));
+    }
+
+    #[test]
+    fn unify_record() {
         assert!(unify(
             &Expr::Record(vec!(
                 (String::from("x"), Expr::Bool(true)),

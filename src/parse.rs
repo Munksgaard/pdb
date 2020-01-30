@@ -131,22 +131,27 @@ pub fn parse(input: &str) -> Result<Statement, Error<Rule>> {
 
 #[cfg(test)]
 mod test {
+    use super::Ty;
     use super::*;
 
     #[test]
-    fn parse_create_test() {
-        use super::Ty;
-
+    fn parse_create_int() {
         assert_eq!(
             Statement::Create(String::from("x"), TableDefinition { ty: Ty::Int }),
             parse("create table x Int").unwrap()
         );
+    }
 
+    #[test]
+    fn parse_create_bool() {
         assert_eq!(
             Statement::Create(String::from("x"), TableDefinition { ty: Ty::Bool }),
             parse("create table x Bool").unwrap()
         );
+    }
 
+    #[test]
+    fn parse_create_tuple() {
         assert_eq!(
             Statement::Create(
                 String::from("x"),
@@ -156,7 +161,10 @@ mod test {
             ),
             parse("create table x (Bool, Int)").unwrap()
         );
+    }
 
+    #[test]
+    fn parse_create_nested_tuple() {
         assert_eq!(
             Statement::Create(
                 String::from("x"),
@@ -166,12 +174,18 @@ mod test {
             ),
             parse("create table x (Bool, Int, (Int, Int,))").unwrap()
         );
+    }
 
+    #[test]
+    fn parse_create_unit() {
         assert_eq!(
             Statement::Create(String::from("x"), TableDefinition { ty: Ty::Unit }),
             parse("create table x ()").unwrap()
         );
+    }
 
+    #[test]
+    fn parse_create_record() {
         assert_eq!(
             Statement::Create(
                 String::from("x"),
@@ -187,20 +201,23 @@ mod test {
     }
 
     #[test]
-    fn parse_statement_test() {
-        use super::Expr;
-        use super::Statement;
-
+    fn parse_insert_int() {
         assert_eq!(
             Statement::Insert(String::from("x"), Expr::Int(42)),
             parse("insert 42 into x").unwrap()
-        );
+        )
+    }
 
+    #[test]
+    fn parse_insert_bool() {
         assert_eq!(
             Statement::Insert(String::from("x"), Expr::Bool(false)),
             parse("insert false into x").unwrap()
         );
+    }
 
+    #[test]
+    fn parse_insert_tuple() {
         assert_eq!(
             Statement::Insert(
                 String::from("x"),
@@ -208,12 +225,18 @@ mod test {
             ),
             parse("insert (false, true, 42) into x").unwrap()
         );
+    }
 
+    #[test]
+    fn parse_insert_unit() {
         assert_eq!(
             Statement::Insert(String::from("x"), Expr::Unit),
             parse("insert () into x").unwrap()
         );
+    }
 
+    #[test]
+    fn parse_insert_record() {
         assert_eq!(
             Statement::Insert(
                 String::from("x"),
@@ -224,7 +247,10 @@ mod test {
             ),
             parse("insert { y = 42, x = false, } into x").unwrap()
         );
+    }
 
+    #[test]
+    fn parse_select() {
         assert_eq!(
             Statement::Select(String::from("x")),
             parse("select from x").unwrap()
