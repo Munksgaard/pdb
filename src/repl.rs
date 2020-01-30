@@ -21,6 +21,12 @@ where
         let mut line = String::new();
         reader.read_line(&mut line)?;
 
+        if &line == "" {
+            writer.write_all(b"\n")?;
+            writer.flush()?;
+            return Ok(());
+        }
+
         match parse(&line) {
             Ok(ast) => match ast {
                 Statement::Create(ident, def) => {
