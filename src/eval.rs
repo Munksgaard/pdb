@@ -5,11 +5,10 @@ pub fn eval(expr: Expr) -> Object {
     match expr {
         Expr::Int(i) => Object::Int(i),
         Expr::Bool(b) => Object::Bool(b),
-        Expr::Tuple(exprs) => Object::Tuple(exprs.clone().into_iter().map(eval).collect()),
+        Expr::Tuple(exprs) => Object::Tuple(exprs.into_iter().map(eval).collect()),
         Expr::Unit => Object::Unit,
         Expr::Record(xs) => Object::Record(
-            xs.clone()
-                .into_iter()
+            xs.into_iter()
                 .map(|(ident, obj)| (ident, eval(obj)))
                 .collect(),
         ),

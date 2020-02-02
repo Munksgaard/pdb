@@ -14,7 +14,7 @@ pub struct TableDefinition {
     pub ty: Ty,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq)]
 pub enum Expr {
     Int(i64),
     Bool(bool),
