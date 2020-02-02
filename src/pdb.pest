@@ -2,13 +2,13 @@ WHITESPACE = _{ " " | "\n" }
 
 identifier = @{ 'a'..'z' ~ ASCII_ALPHANUMERIC* }
 
+tyident = @{ 'A'..'Z' ~ ASCII_ALPHANUMERIC* }
+
 unit = { "()" }
 
 tytuple = { "(" ~ ty ~ ("," ~ ty)+ ~ ","? ~ ")" }
 
 tyrecord = { "{" ~ identifier ~ ":" ~ ty ~ ("," ~ identifier ~ ":" ~ ty)* ~ ","? ~ "}" }
-
-tyident = @{ 'A'..'Z' ~ ASCII_ALPHANUMERIC* }
 
 ty = { unit | tytuple | tyrecord | tyident }
 
