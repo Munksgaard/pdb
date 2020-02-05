@@ -2,7 +2,7 @@ use crate::ast::{Ident, Statement, TableDefinition};
 use crate::eval::eval;
 use crate::object::Object;
 use crate::parse::parse;
-use crate::ty::unify;
+use crate::ty::matches_type;
 use std::io::{BufRead, Write};
 
 const PROMPT: &[u8; 3] = b">> ";
@@ -38,7 +38,7 @@ where
                     if let Some((_, def, objs)) =
                         tables.iter_mut().find(|(ident2, _, _)| ident2 == &ident)
                     {
-                        if unify(&expr, &def.ty) {
+                        if matches_type(&expr, &def.ty) {
                             let result = eval(expr);
                             objs.push(result);
                             writer.write_all(b"Inserted 1\n")?;
