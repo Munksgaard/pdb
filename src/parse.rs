@@ -11,7 +11,7 @@ fn parse_tyrecord(mut pairs: Pairs<Rule>) -> Result<Ty, Error<Rule>> {
     let mut xs = Vec::new();
 
     while let Some(ident) = pairs.next() {
-        let ty = parse_ty(pairs.next().unwrap())?;
+        let ty = parse_ty(pairs.next().unwrap().into_inner().next().unwrap())?;
         xs.push((ident.as_str().to_owned(), ty));
     }
 
@@ -21,7 +21,6 @@ fn parse_tyrecord(mut pairs: Pairs<Rule>) -> Result<Ty, Error<Rule>> {
 }
 
 fn parse_ty(pair: Pair<Rule>) -> Result<Ty, Error<Rule>> {
-    let pair = pair.into_inner().next().unwrap();
     match pair.as_rule() {
         Rule::tyident => match pair.as_str() {
             "Int" => Ok(Ty::Int),
@@ -35,7 +34,7 @@ fn parse_ty(pair: Pair<Rule>) -> Result<Ty, Error<Rule>> {
         },
         Rule::tytuple => Ok(Ty::Tuple(
             pair.into_inner()
-                .map(|x| parse_ty(x))
+                .map(|x| parse_ty(x.into_inner().next().unwrap()))
                 .collect::<Result<Vec<_>, _>>()?,
         )),
         Rule::unit => Ok(Ty::Unit),
@@ -56,7 +55,7 @@ fn parse_record(mut pairs: Pairs<Rule>) -> Result<Expr, Error<Rule>> {
     let mut xs = Vec::new();
 
     while let Some(ident) = pairs.next() {
-        let expr = parse_expr(pairs.next().unwrap())?;
+        let expr = parse_expr(pairs.next().unwrap().into_inner().next().unwrap())?;
         xs.push((ident.as_str().to_owned(), expr));
     }
 
@@ -65,14 +64,13 @@ fn parse_record(mut pairs: Pairs<Rule>) -> Result<Expr, Error<Rule>> {
     Ok(Expr::Record(xs))
 }
 
-fn parse_expr(pair: Pair<Rule>) -> Result<Expr, Error<Rule>> {
-    let expr = pair.into_inner().next().unwrap();
+fn parse_expr(expr: Pair<Rule>) -> Result<Expr, Error<Rule>> {
     match expr.as_rule() {
         Rule::int => Ok(Expr::Int(expr.as_str().parse().unwrap())),
         Rule::bool => Ok(Expr::Bool(expr.as_str().parse().unwrap())),
         Rule::tuple => Ok(Expr::Tuple(
             expr.into_inner()
-                .map(parse_expr)
+                .map(|x| parse_expr(x.into_inner().next().unwrap()))
                 .collect::<Result<Vec<_>, _>>()?,
         )),
         Rule::unit => Ok(Expr::Unit),
@@ -93,7 +91,7 @@ pub fn parse_select(mut pairs: Pairs<Rule>) -> Result<Statement, Error<Rule>> {
 }
 
 pub fn parse_insert(mut pairs: Pairs<Rule>) -> Result<Statement, Error<Rule>> {
-    let expr = parse_expr(pairs.next().unwrap())?;
+    let expr = parse_expr(pairs.next().unwrap().into_inner().next().unwrap())?;
     let ident = pairs.next().unwrap().as_str();
 
     Ok(Statement::Insert(ident.to_string(), expr))
@@ -101,7 +99,7 @@ pub fn parse_insert(mut pairs: Pairs<Rule>) -> Result<Statement, Error<Rule>> {
 
 pub fn parse_create(mut pairs: Pairs<Rule>) -> Result<Statement, Error<Rule>> {
     let ident = pairs.next().unwrap().as_str();
-    let ty = parse_ty(pairs.next().unwrap())?;
+    let ty = parse_ty(pairs.next().unwrap().into_inner().next().unwrap())?;
 
     Ok(Statement::Create(
         ident.to_string(),
