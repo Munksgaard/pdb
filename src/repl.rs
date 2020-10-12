@@ -3,11 +3,12 @@ use crate::eval::eval;
 use crate::object::Object;
 use crate::parse::parse;
 use crate::ty::matches_type;
+use anyhow::Result;
 use std::io::{BufRead, Write};
 
 const PROMPT: &[u8; 3] = b">> ";
 
-pub fn start<R, W>(reader: &mut R, writer: &mut W) -> Result<(), Box<dyn std::error::Error>>
+pub fn start<R, W>(reader: &mut R, writer: &mut W) -> Result<()>
 where
     R: BufRead,
     W: Write,
