@@ -25,6 +25,7 @@ fn parse_ty(pair: Pair<Rule>) -> Result<Ty, Error<Rule>> {
         Rule::tyident => match pair.as_str() {
             "Int" => Ok(Ty::Int),
             "Bool" => Ok(Ty::Bool),
+            "String" => Ok(Ty::String),
             x => Err(Error::new_from_span(
                 pest::error::ErrorVariant::CustomError {
                     message: format!("Invalid type {}", x),
@@ -74,6 +75,9 @@ fn parse_expr(expr: Pair<Rule>) -> Result<Expr, Error<Rule>> {
                 .collect::<Result<Vec<_>, _>>()?,
         )),
         Rule::unit => Ok(Expr::Unit),
+        Rule::string => Ok(Expr::String(
+            expr.into_inner().next().unwrap().as_str().to_string(),
+        )),
         Rule::record => parse_record(expr.into_inner()),
         r => Err(Error::new_from_span(
             pest::error::ErrorVariant::CustomError {

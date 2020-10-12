@@ -8,6 +8,7 @@ pub enum Object {
     Bool(bool),
     Tuple(Vec<Object>),
     Unit,
+    String(String),
     Record(Vec<(Ident, Object)>),
 }
 
@@ -31,6 +32,7 @@ impl fmt::Display for Object {
                 write!(f, ")")
             }
             Object::Unit => write!(f, "()"),
+            Object::String(b) => write!(f, "{}", b),
             Object::Record(pairs) => {
                 let mut pairs = pairs.iter();
                 write!(f, "{{")?;

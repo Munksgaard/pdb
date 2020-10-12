@@ -9,6 +9,7 @@ pub fn matches_type(expr: &Expr, ty: &Ty) -> bool {
             .zip(tys.iter())
             .all(|(x, y)| matches_type(x, y)),
         (Expr::Unit, Ty::Unit) => true,
+        (Expr::String(_), Ty::String) => true,
         (Expr::Record(expr_pairs), Ty::Record(ty_pairs)) => expr_pairs
             .iter()
             .zip(ty_pairs.iter())

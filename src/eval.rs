@@ -7,6 +7,7 @@ pub fn eval(expr: Expr) -> Object {
         Expr::Bool(b) => Object::Bool(b),
         Expr::Tuple(exprs) => Object::Tuple(exprs.into_iter().map(eval).collect()),
         Expr::Unit => Object::Unit,
+        Expr::String(b) => Object::String(b),
         Expr::Record(xs) => Object::Record(
             xs.into_iter()
                 .map(|(ident, obj)| (ident, eval(obj)))

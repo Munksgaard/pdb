@@ -6,6 +6,7 @@ pub enum Ty {
     Bool,
     Tuple(Vec<Ty>),
     Unit,
+    String,
     Record(Vec<(Ident, Ty)>),
 }
 
@@ -20,6 +21,7 @@ pub enum Expr {
     Bool(bool),
     Tuple(Vec<Expr>),
     Unit,
+    String(String),
     Record(Vec<(Ident, Expr)>),
 }
 

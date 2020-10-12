@@ -21,9 +21,19 @@ bool = { "true" | "false" }
 
 tuple = { "(" ~ expr ~ ("," ~ expr)+ ~ ","? ~ ")" }
 
+string = ${ "\"" ~ inner ~ "\"" }
+
+inner = @{ char* }
+
+char = {
+    !("\"" | "\\") ~ ANY
+    | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+    | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+}
+
 record = { "{" ~ identifier ~ "=" ~ expr ~ ("," ~ identifier ~ "=" ~ expr)* ~ ","? ~ "}" }
 
-expr = { unit | tuple | record | int | bool }
+expr = { unit | tuple | record | int | bool | string }
 
 insert = { "insert" ~ expr ~ "into" ~ identifier }
 
