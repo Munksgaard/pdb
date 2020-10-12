@@ -1,5 +1,4 @@
 use anyhow::Result;
-use pdb;
 
 fn main() -> Result<()> {
     println!("Hello! This is pdb");

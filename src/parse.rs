@@ -101,10 +101,7 @@ pub fn parse_create(mut pairs: Pairs<Rule>) -> Result<Statement, Error<Rule>> {
     let ident = pairs.next().unwrap().as_str();
     let ty = parse_ty(pairs.next().unwrap().into_inner().next().unwrap())?;
 
-    Ok(Statement::Create(
-        ident.to_string(),
-        TableDefinition { ty: ty },
-    ))
+    Ok(Statement::Create(ident.to_string(), TableDefinition { ty }))
 }
 
 fn parse_statement(pair: Pair<Rule>) -> Result<Statement, Error<Rule>> {
