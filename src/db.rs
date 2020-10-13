@@ -1,19 +1,25 @@
 use crate::ast::{Ident, Statement, TableDefinition};
 use crate::eval::eval;
 use crate::object::Object;
-use crate::parse::parse;
 use crate::ty::matches_type;
-use anyhow::{anyhow, Error, Result};
-use rustyline::error::ReadlineError;
-use rustyline::Editor;
-
-const PROMPT: &str = ">> ";
+use anyhow::Result;
+use std::sync::mpsc::Receiver;
 
 type Tables = Vec<(Ident, TableDefinition, Vec<Object>)>;
 
-fn parse_helper(tables: &mut Tables, rl: &mut Editor<()>, line: &str) {
-    match parse(&line) {
-        Ok(ast) => match ast {
+pub fn start(rx: Receiver<Statement>) -> Result<()> {
+    let mut tables: Tables = Vec::new();
+
+    loop {
+        let stm = match rx.recv() {
+            Ok(stm) => stm,
+            Err(e) => {
+                println!("Shutting down db (cause: {})", e);
+                return Ok(());
+            }
+        };
+
+        match stm {
             Statement::Create(ident, def) => {
                 tables.push((ident, def, Vec::new()));
                 println!("Created\n");
@@ -43,29 +49,6 @@ fn parse_helper(tables: &mut Tables, rl: &mut Editor<()>, line: &str) {
                     println!("No such table\n");
                 }
             }
-        },
-        Err(e) => {
-            println!("No parse: {}\n", e);
-        }
-    };
-    rl.add_history_entry(line);
-}
-
-pub fn start() -> Result<()> {
-    let mut tables: Tables = Vec::new();
-
-    let mut rl = Editor::<()>::new();
-    loop {
-        let readline = rl.readline(PROMPT);
-        match readline {
-            Ok(line) => parse_helper(&mut tables, &mut rl, &line),
-            Err(ReadlineError::Interrupted) => {
-                break Err(anyhow!("unimplemented"));
-            }
-            Err(ReadlineError::Eof) => {
-                return Ok(());
-            }
-            Err(err) => break Err(Error::new(err)),
         }
     }
 }

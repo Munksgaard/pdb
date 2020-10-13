@@ -1,10 +1,19 @@
 use anyhow::Result;
+use std::sync::mpsc::channel;
+use std::thread;
 
 fn main() -> Result<()> {
     println!("Hello! This is pdb");
-    println!("Feel free to type in commands");
 
-    pdb::repl::start().unwrap_or_else(|e| panic!("An error occurred: {}", e));
+    // Create a simple streaming channel
+    let (tx, rx) = channel();
+
+    // Spawn Db handler thread
+    let handler = thread::spawn(|| pdb::db::start(rx));
+
+    pdb::cli::start(tx)?;
+
+    handler.join().expect("Something unexpected happened!")?;
 
     Ok(())
 }
