@@ -2,19 +2,19 @@ use crate::ast::{Ident, Statement, TableDefinition};
 use crate::eval::eval;
 use crate::object::Object;
 use crate::ty::matches_type;
-use anyhow::Result;
-use std::sync::mpsc::Receiver;
+use anyhow::{anyhow, Context, Result};
+use std::sync::mpsc::{Receiver, Sender};
 
 type Tables = Vec<(Ident, TableDefinition, Vec<Object>)>;
 
-pub fn start(rx: Receiver<Statement>) -> Result<()> {
+pub fn start(rx: Receiver<(Statement, Sender<Result<String>>)>) -> Result<()> {
     let mut tables: Tables = Vec::new();
 
     loop {
-        let stm = match rx.recv() {
-            Ok(stm) => stm,
+        let (stm, tx) = match rx.recv() {
+            Ok(x) => x,
             Err(e) => {
-                println!("Shutting down db (cause: {})", e);
+                eprintln!("Shutting down db (cause: {})", e);
                 return Ok(());
             }
         };
@@ -22,7 +22,8 @@ pub fn start(rx: Receiver<Statement>) -> Result<()> {
         match stm {
             Statement::Create(ident, def) => {
                 tables.push((ident, def, Vec::new()));
-                println!("Created\n");
+                tx.send(Ok(String::from("Created\n")))
+                    .context("Ack channel prematurely closed")?;
             }
             Statement::Insert(ident, expr) => {
                 if let Some((_, def, objs)) =
@@ -31,22 +32,28 @@ pub fn start(rx: Receiver<Statement>) -> Result<()> {
                     if matches_type(&expr, &def.ty) {
                         let result = eval(expr);
                         objs.push(result);
-                        println!("Inserted 1\n");
+                        tx.send(Ok(String::from("Inserted 1\n")))
+                            .context("Ack channel prematurely closed")?;
                     } else {
-                        println!(
+                        tx.send(Err(anyhow!(
                             "Could not insert {:?} into table {:?} with definition {:?}\n",
-                            expr, ident, &def.ty
-                        );
+                            expr,
+                            ident,
+                            &def.ty
+                        )))
+                        .context("Ack channel prematurely closed")?;
                     }
                 } else {
-                    println!("No such table\n");
+                    tx.send(Err(anyhow!("No such table\n")))
+                        .context("Ack channel prematurely closed")?;
                 }
             }
             Statement::Select(ident) => {
                 if let Some((_, _, objs)) = tables.iter().find(|(ident2, _, _)| ident2 == &ident) {
-                    println!("{:?}\n", objs);
+                    tx.send(Ok(format!("{:?}\n", objs)))?;
                 } else {
-                    println!("No such table\n");
+                    tx.send(Err(anyhow!("No such table\n")))
+                        .context("Ack channel prematurely closed")?;
                 }
             }
         }
