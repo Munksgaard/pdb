@@ -1,12 +1,16 @@
 use anyhow::Result;
+use pdb::ast::Statement;
 use serde_lexpr::from_str;
 use std::sync::mpsc::channel;
+use std::sync::mpsc::Sender;
 use std::thread;
 use structopt::StructOpt;
 use tokio::io::AsyncBufReadExt;
+use tokio::io::AsyncWrite;
 use tokio::io::AsyncWriteExt;
 use tokio::io::BufReader;
 use tokio::net::TcpListener;
+use tokio::prelude::AsyncBufRead;
 
 #[derive(Debug, StructOpt)]
 struct Config {
@@ -37,47 +41,52 @@ async fn main(args: Args) -> Result<()> {
     loop {
         let (socket, _) = listener.accept().await?;
 
-        let mut socket = BufReader::new(socket);
+        let socket = BufReader::new(socket);
 
         let tx_clone = tx.clone();
 
-        tokio::spawn(async move {
-            loop {
-                let mut buffer = String::new();
+        tokio::spawn(async move { start(tx_clone, socket).await });
+    }
+}
 
-                match socket.read_line(&mut buffer).await {
-                    Ok(_) => match from_str(&buffer) {
-                        Ok(stm) => {
-                            println!("Got {:?}", stm);
-                            let (tx2, rx2) = channel();
+async fn start(
+    tx: Sender<(Statement, Sender<Result<String>>)>,
+    mut stream: impl AsyncBufRead + AsyncWrite + Unpin,
+) {
+    loop {
+        let mut buffer = String::new();
 
-                            tx_clone.send((stm, tx2)).expect("unimplemented");
+        match stream.read_line(&mut buffer).await {
+            Ok(_) => match from_str(&buffer) {
+                Ok(stm) => {
+                    println!("Got {:?}", stm);
+                    let (tx2, rx2) = channel();
 
-                            socket
-                                .write_all({
-                                    let res = rx2.recv();
-                                    res.expect("unimplemented").unwrap().to_string().as_bytes()
-                                })
-                                .await
-                                .unwrap();
+                    tx.send((stm, tx2)).expect("unimplemented");
 
-                            socket.flush().await.unwrap();
-                        }
-                        Err(e) => {
-                            socket
-                                .write_all(format!("No parse: {}", e).as_bytes())
-                                .await
-                                .unwrap();
+                    stream
+                        .write_all({
+                            let res = rx2.recv();
+                            res.expect("unimplemented").unwrap().to_string().as_bytes()
+                        })
+                        .await
+                        .unwrap();
 
-                            socket.flush();
-                        }
-                    },
-                    Err(e) => {
-                        eprintln!("failed to read from socket; err = {:?}", e);
-                        break;
-                    }
+                    stream.flush().await.unwrap();
                 }
+                Err(e) => {
+                    stream
+                        .write_all(format!("No parse: {}", e).as_bytes())
+                        .await
+                        .unwrap();
+
+                    stream.flush();
+                }
+            },
+            Err(e) => {
+                eprintln!("failed to read from stream; err = {:?}", e);
+                break;
             }
-        });
+        }
     }
 }
