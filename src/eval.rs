@@ -1,18 +1,40 @@
 use crate::ast::*;
+use crate::environment::Environment;
 use crate::object::Object;
+use anyhow::Result;
 
-pub fn eval(expr: Expr) -> Object {
+pub fn eval(env: &Environment, expr: Expr) -> Result<Object> {
     match expr {
-        Expr::Int(i) => Object::Int(i),
-        Expr::Bool(b) => Object::Bool(b),
-        Expr::Tuple(exprs) => Object::Tuple(exprs.into_iter().map(eval).collect()),
-        Expr::Unit => Object::Unit,
-        Expr::String(b) => Object::String(b),
-        Expr::Record(xs) => Object::Record(
-            xs.into_iter()
-                .map(|(ident, obj)| (ident, eval(obj)))
-                .collect(),
-        ),
+        Expr::Int(i) => Ok(Object::Int(i)),
+        Expr::Bool(b) => Ok(Object::Bool(b)),
+        Expr::Tuple(exprs) => Ok(Object::Tuple(
+            exprs
+                .into_iter()
+                .map(|e| eval(env, e))
+                .collect::<Result<Vec<_>>>()?,
+        )),
+        Expr::Unit => Ok(Object::Unit),
+        Expr::String(b) => Ok(Object::String(b)),
+        Expr::Record(xs) => {
+            let res = xs
+                .into_iter()
+                .map(|(ident, obj)| Ok((ident, eval(env, obj)?)))
+                .collect::<Result<Vec<_>>>()?;
+            Ok(Object::Record(res))
+        }
+        Expr::Ident(ident) => env.lookup(&ident),
+        Expr::Let(binds, e) => {
+            let env_ = binds
+                .into_iter()
+                .try_fold::<Environment, _, Result<Environment>>(
+                    env.clone(),
+                    |env, (ident, e_inner)| {
+                        let obj = eval(&env, e_inner)?;
+                        Ok(env.insert(&ident, obj))
+                    },
+                )?;
+            eval(&env_, *e)
+        }
     }
 }
 
@@ -22,7 +44,10 @@ mod test {
 
     #[test]
     fn eval_int() {
-        assert_eq!(eval(Expr::Int(42)), Object::Int(42));
+        assert_eq!(
+            eval(&Environment::new(), Expr::Int(42)),
+            Ok(Object::Int(42))
+        );
     }
 
     #[test]

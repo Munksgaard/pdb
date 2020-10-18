@@ -33,7 +33,9 @@ char = {
 
 record = { "{" ~ identifier ~ "=" ~ expr ~ ("," ~ identifier ~ "=" ~ expr)* ~ ","? ~ "}" }
 
-expr = { unit | tuple | record | int | bool | string }
+letbind = { ( "let" ~ identifier ~ "=" ~ expr )+ ~ "in" ~ expr }
+
+expr = { letbind | unit | tuple | record | int | bool | string | identifier }
 
 insert = { "insert" ~ expr ~ "into" ~ identifier }
 

@@ -25,6 +25,8 @@ pub enum Expr {
     Unit,
     String(String),
     Record(Vec<(Ident, Expr)>),
+    Ident(Ident),
+    Let(Vec<(Ident, Expr)>, Box<Expr>),
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]

@@ -65,6 +65,40 @@ fn parse_record(mut pairs: Pairs<Rule>) -> Result<Expr, Error<Rule>> {
     Ok(Expr::Record(xs))
 }
 
+fn parse_let(mut pairs: Pairs<Rule>) -> Result<Expr, Error<Rule>> {
+    let mut binds = Vec::new();
+
+    loop {
+        if let Some(pair) = pairs.next() {
+            match pair.as_rule() {
+                Rule::identifier => {
+                    let expr = parse_expr(pairs.next().unwrap().into_inner().next().unwrap())?;
+                    binds.push((pair.as_str().to_string(), expr));
+                }
+                Rule::expr => {
+                    let expr = parse_expr(pair.into_inner().next().unwrap())?;
+                    return Ok(Expr::Let(binds, Box::new(expr)));
+                }
+                other => {
+                    unimplemented!("Invalid pair inside let-rule: {:?}", other);
+                }
+            }
+        } else {
+            unimplemented!("Invalid let binding {:?}", pairs)
+        }
+    }
+    // let mut xs = Vec::new();
+
+    // while let Some(ident) = pairs.next() {
+    //     let expr = parse_expr(pairs.next().unwrap().into_inner().next().unwrap())?;
+    //     xs.push((ident.as_str().to_owned(), expr));
+    // }
+
+    // xs.sort_by(|(x, _), (y, _)| x.cmp(y));
+
+    // Ok(Expr::Record(xs))
+}
+
 fn parse_expr(expr: Pair<Rule>) -> Result<Expr, Error<Rule>> {
     match expr.as_rule() {
         Rule::int => Ok(Expr::Int(expr.as_str().parse().unwrap())),
@@ -79,6 +113,8 @@ fn parse_expr(expr: Pair<Rule>) -> Result<Expr, Error<Rule>> {
             expr.into_inner().next().unwrap().as_str().to_string(),
         )),
         Rule::record => parse_record(expr.into_inner()),
+        Rule::identifier => Ok(Expr::Ident(expr.as_str().to_string())),
+        Rule::letbind => parse_let(expr.into_inner()),
         r => Err(Error::new_from_span(
             pest::error::ErrorVariant::CustomError {
                 message: format!("Unexpected rule {:?}, expected expr", r),

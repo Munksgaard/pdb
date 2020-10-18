@@ -2,7 +2,7 @@ use crate::ast::Ident;
 
 use std::fmt;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Object {
     Int(i64),
     Bool(bool),

@@ -1,4 +1,5 @@
 use crate::ast::{Ident, Statement, TableDefinition};
+use crate::environment::Environment;
 use crate::eval::eval;
 use crate::object::Object;
 use crate::ty::matches_type;
@@ -30,7 +31,7 @@ pub fn start(rx: Receiver<(Statement, Sender<Result<String>>)>) -> Result<()> {
                     tables.iter_mut().find(|(ident2, _, _)| ident2 == &ident)
                 {
                     if matches_type(&expr, &def.ty) {
-                        let result = eval(expr);
+                        let result = eval(&Environment::new(), expr)?;
                         objs.push(result);
                         tx.send(Ok(String::from("Inserted 1\n")))
                             .context("Ack channel prematurely closed")?;
