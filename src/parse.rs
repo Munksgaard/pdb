@@ -20,18 +20,13 @@ fn parse_tyrecord(mut pairs: Pairs<Rule>) -> Result<Ty, Error<Rule>> {
     Ok(Ty::Record(xs))
 }
 
-fn parse_ty(pair: Pair<Rule>) -> Result<Ty, Error<Rule>> {
+pub fn parse_ty(pair: Pair<Rule>) -> Result<Ty, Error<Rule>> {
     match pair.as_rule() {
         Rule::tyident => match pair.as_str() {
             "Int" => Ok(Ty::Int),
             "Bool" => Ok(Ty::Bool),
             "String" => Ok(Ty::String),
-            x => Err(Error::new_from_span(
-                pest::error::ErrorVariant::CustomError {
-                    message: format!("Invalid type {}", x),
-                },
-                pair.as_span(),
-            )),
+            x => Ok(Ty::Var(x.to_string())),
         },
         Rule::tytuple => Ok(Ty::Tuple(
             pair.into_inner()
@@ -40,10 +35,17 @@ fn parse_ty(pair: Pair<Rule>) -> Result<Ty, Error<Rule>> {
         )),
         Rule::unit => Ok(Ty::Unit),
         Rule::tyrecord => parse_tyrecord(pair.into_inner()),
+        Rule::tyfun => {
+            let mut inner = pair.into_inner();
+            let lhs = parse_ty(inner.next().unwrap())?;
+            let rhs = parse_ty(inner.next().unwrap().into_inner().next().unwrap())?;
+            Ok(Ty::Fun(Box::new(lhs), Box::new(rhs)))
+        }
+        Rule::ty => parse_ty(pair.into_inner().next().unwrap()),
         r => Err(Error::new_from_span(
             pest::error::ErrorVariant::CustomError {
                 message: format!(
-                    "Unexpected rule {:?}, expected tyindent, tyrecord, unit or tytuple",
+                    "Unexpected rule {:?}, expected tyindent, tyrecord, unit, tyfun or tytuple",
                     r
                 ),
             },
@@ -56,7 +58,7 @@ fn parse_record(mut pairs: Pairs<Rule>) -> Result<Expr, Error<Rule>> {
     let mut xs = Vec::new();
 
     while let Some(ident) = pairs.next() {
-        let expr = parse_expr(pairs.next().unwrap().into_inner().next().unwrap())?;
+        let expr = parse_exprs(pairs.next().unwrap().into_inner())?;
         xs.push((ident.as_str().to_owned(), expr));
     }
 
@@ -72,11 +74,11 @@ fn parse_let(mut pairs: Pairs<Rule>) -> Result<Expr, Error<Rule>> {
         if let Some(pair) = pairs.next() {
             match pair.as_rule() {
                 Rule::identifier => {
-                    let expr = parse_expr(pairs.next().unwrap().into_inner().next().unwrap())?;
+                    let expr = parse_exprs(pairs.next().unwrap().into_inner())?;
                     binds.push((pair.as_str().to_string(), expr));
                 }
                 Rule::expr => {
-                    let expr = parse_expr(pair.into_inner().next().unwrap())?;
+                    let expr = parse_exprs(pair.into_inner())?;
                     return Ok(Expr::Let(binds, Box::new(expr)));
                 }
                 other => {
@@ -87,41 +89,55 @@ fn parse_let(mut pairs: Pairs<Rule>) -> Result<Expr, Error<Rule>> {
             unimplemented!("Invalid let binding {:?}", pairs)
         }
     }
-    // let mut xs = Vec::new();
-
-    // while let Some(ident) = pairs.next() {
-    //     let expr = parse_expr(pairs.next().unwrap().into_inner().next().unwrap())?;
-    //     xs.push((ident.as_str().to_owned(), expr));
-    // }
-
-    // xs.sort_by(|(x, _), (y, _)| x.cmp(y));
-
-    // Ok(Expr::Record(xs))
 }
 
-fn parse_expr(expr: Pair<Rule>) -> Result<Expr, Error<Rule>> {
-    match expr.as_rule() {
-        Rule::int => Ok(Expr::Int(expr.as_str().parse().unwrap())),
-        Rule::bool => Ok(Expr::Bool(expr.as_str().parse().unwrap())),
+fn parse_lambda(mut pairs: Pairs<Rule>) -> Result<Expr, Error<Rule>> {
+    let ident = pairs.next().unwrap().as_str().to_string();
+    let expr = parse_exprs(pairs.next().unwrap().into_inner())?;
+    Ok(Expr::Lambda(ident, Box::new(expr)))
+}
+
+pub fn parse_term(term: Pair<Rule>) -> Result<Expr, Error<Rule>> {
+    match term.as_rule() {
+        Rule::int => Ok(Expr::Int(term.as_str().parse().unwrap())),
+        Rule::bool => Ok(Expr::Bool(term.as_str().parse().unwrap())),
         Rule::tuple => Ok(Expr::Tuple(
-            expr.into_inner()
-                .map(|x| parse_expr(x.into_inner().next().unwrap()))
+            term.into_inner()
+                .map(|x| parse_exprs(x.into_inner()))
                 .collect::<Result<Vec<_>, _>>()?,
         )),
         Rule::unit => Ok(Expr::Unit),
         Rule::string => Ok(Expr::String(
-            expr.into_inner().next().unwrap().as_str().to_string(),
+            term.into_inner().next().unwrap().as_str().to_string(),
         )),
-        Rule::record => parse_record(expr.into_inner()),
-        Rule::identifier => Ok(Expr::Ident(expr.as_str().to_string())),
-        Rule::letbind => parse_let(expr.into_inner()),
+        Rule::record => parse_record(term.into_inner()),
+        Rule::identifier => Ok(Expr::Ident(term.as_str().to_string())),
+        Rule::letbind => parse_let(term.into_inner()),
+        Rule::lambda => parse_lambda(term.into_inner()),
+        Rule::expr => parse_exprs(term.into_inner()),
         r => Err(Error::new_from_span(
             pest::error::ErrorVariant::CustomError {
-                message: format!("Unexpected rule {:?}, expected expr", r),
+                message: format!("Unexpected rule {:?}, expected term", r),
             },
-            expr.as_span(),
+            term.as_span(),
         )),
     }
+}
+
+pub fn parse_exprs(mut exprs: Pairs<Rule>) -> Result<Expr, Error<Rule>> {
+    println!("expr: {:?}", exprs);
+    let mut res = parse_term(exprs.next().unwrap().into_inner().next().unwrap())?;
+
+    for term in exprs {
+        println!("term: {:?}", term);
+        res = Expr::Apply(
+            Box::new(res),
+            Box::new(parse_term(term.into_inner().next().unwrap())?),
+        );
+    }
+
+    println!("res: {:?}", res);
+    Ok(res)
 }
 
 pub fn parse_select(mut pairs: Pairs<Rule>) -> Result<Statement, Error<Rule>> {
@@ -131,7 +147,8 @@ pub fn parse_select(mut pairs: Pairs<Rule>) -> Result<Statement, Error<Rule>> {
 }
 
 pub fn parse_insert(mut pairs: Pairs<Rule>) -> Result<Statement, Error<Rule>> {
-    let expr = parse_expr(pairs.next().unwrap().into_inner().next().unwrap())?;
+    println!("parse_insert: {:?}", &pairs);
+    let expr = parse_exprs(pairs.next().unwrap().into_inner())?;
     let ident = pairs.next().unwrap().as_str();
 
     Ok(Statement::Insert(ident.to_string(), expr))
@@ -159,7 +176,12 @@ fn parse_statement(pair: Pair<Rule>) -> Result<Statement, Error<Rule>> {
 }
 
 pub fn parse(input: &str) -> Result<Statement, Error<Rule>> {
-    let statement = Parser::parse(Rule::statement, input)?.next().unwrap();
+    let statement = Parser::parse(Rule::statement, input)
+        .unwrap()
+        .next()
+        .unwrap();
+
+    println!("parse: {:?}", statement);
 
     parse_statement(statement)
 }
@@ -168,6 +190,138 @@ pub fn parse(input: &str) -> Result<Statement, Error<Rule>> {
 mod test {
     use super::Ty;
     use super::*;
+
+    fn parse_ty_helper(input: &str) -> Ty {
+        super::parse_ty(Parser::parse(Rule::ty, input).unwrap().next().unwrap()).unwrap()
+    }
+
+    #[test]
+    fn parse_ty() {
+        use Ty::*;
+
+        assert_eq!(Int, parse_ty_helper(&"((Int))"));
+        assert_eq!(Bool, parse_ty_helper(&"Bool"));
+        assert_eq!(Tuple(vec!(Int, Bool)), parse_ty_helper(&"((Int, Bool))"));
+        assert_eq!(Unit, parse_ty_helper(&"()"));
+        assert_eq!(String, parse_ty_helper(&"String"));
+        assert_eq!(Var("Foo".to_string()), parse_ty_helper(&"Foo"));
+        assert_eq!(Int, parse_ty_helper(&"((Int))"));
+        assert_eq!(
+            Fun(Box::new(Int), Box::new(Int)),
+            parse_ty_helper(&"(Int -> Int)")
+        );
+        assert_eq!(
+            Fun(Box::new(Fun(Box::new(Int), Box::new(Int))), Box::new(Int)),
+            parse_ty_helper(&"(Int -> Int) -> Int")
+        );
+        assert_eq!(
+            Fun(Box::new(Int), Box::new(Fun(Box::new(Int), Box::new(Int)))),
+            parse_ty_helper(&"Int -> Int -> Int")
+        );
+        assert_eq!(
+            Fun(Box::new(Int), Box::new(Fun(Box::new(Int), Box::new(Int)))),
+            parse_ty_helper(&"Int -> (Int -> Int)")
+        );
+    }
+
+    fn parse_exprs_helper(input: &str) -> Expr {
+        super::parse_exprs(
+            Parser::parse(Rule::expr, input)
+                .unwrap()
+                .next()
+                .unwrap()
+                .into_inner(),
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn parse_exprs() {
+        use Expr::*;
+
+        assert_eq!(Int(4), parse_exprs_helper(&"4"));
+        assert_eq!(Ident("x".to_string()), parse_exprs_helper(&"x"));
+        assert_eq!(
+            Apply(
+                Box::new(Ident("x".to_string())),
+                Box::new(Ident("y".to_string()))
+            ),
+            parse_exprs_helper(&"x y")
+        );
+        assert_eq!(
+            Apply(
+                Box::new(Apply(
+                    Box::new(Ident("x".to_string())),
+                    Box::new(Ident("y".to_string()))
+                )),
+                Box::new(Ident("z".to_string()))
+            ),
+            parse_exprs_helper(&"x y z")
+        );
+        assert_eq!(
+            Apply(
+                Box::new(Apply(
+                    Box::new(Ident("x".to_string())),
+                    Box::new(Ident("y".to_string()))
+                )),
+                Box::new(Ident("z".to_string()))
+            ),
+            parse_exprs_helper(&"(x y) z")
+        );
+        assert_eq!(
+            Apply(
+                Box::new(Ident("x".to_string())),
+                Box::new(Apply(
+                    Box::new(Ident("y".to_string())),
+                    Box::new(Ident("z".to_string()))
+                ))
+            ),
+            parse_exprs_helper(&"x (y z)")
+        );
+        assert_eq!(
+            Apply(
+                Box::new(Ident("x".to_string())),
+                Box::new(Tuple(vec!(Ident("y".to_string()), Ident("z".to_string()))))
+            ),
+            parse_exprs_helper(&"x (y, z)")
+        );
+        assert_eq!(
+            Lambda("f".to_string(), Box::new(Ident("x".to_string()))),
+            parse_exprs_helper(&"lambda f -> x")
+        );
+    }
+
+    #[test]
+    fn parse_insert() {
+        use Expr::*;
+        use Statement::*;
+
+        assert_eq!(
+            Insert("x".to_string(), Int(4)),
+            super::parse_insert(
+                Parser::parse(Rule::insert, &"insert 4 into x")
+                    .unwrap()
+                    .next()
+                    .unwrap()
+                    .into_inner(),
+            )
+            .unwrap()
+        );
+        assert_eq!(
+            Insert(
+                "x".to_string(),
+                Apply(Box::new(Ident("f".to_string())), Box::new(Int(4)))
+            ),
+            super::parse_insert(
+                Parser::parse(Rule::insert, &"insert f 4 into x")
+                    .unwrap()
+                    .next()
+                    .unwrap()
+                    .into_inner(),
+            )
+            .unwrap()
+        );
+    }
 
     #[test]
     fn parse_create_int() {
@@ -254,8 +408,8 @@ mod test {
     #[test]
     fn parse_insert_0() {
         assert_eq!(
-            Statement::Insert(String::from("x"), Expr::Int(0)),
-            parse("insert 0 into x").unwrap()
+            Ok(Statement::Insert(String::from("x"), Expr::Int(0))),
+            parse("insert 0 into x")
         )
     }
 

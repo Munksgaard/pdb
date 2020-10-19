@@ -10,6 +10,8 @@ pub enum Ty {
     Unit,
     String,
     Record(Vec<(Ident, Ty)>),
+    Var(Ident),
+    Fun(Box<Ty>, Box<Ty>),
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -27,6 +29,8 @@ pub enum Expr {
     Record(Vec<(Ident, Expr)>),
     Ident(Ident),
     Let(Vec<(Ident, Expr)>, Box<Expr>),
+    Apply(Box<Expr>, Box<Expr>),
+    Lambda(Ident, Box<Expr>),
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]

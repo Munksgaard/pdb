@@ -1,6 +1,8 @@
 WHITESPACE = _{ " " | "\n" }
 
-identifier = @{ 'a'..'z' ~ ASCII_ALPHANUMERIC* }
+keyword = { "let" | "insert" | "select" | "from" | "into" | "create" | "end" | "lambda" }
+
+identifier = @{ !keyword ~ ('a'..'z' ~ ASCII_ALPHANUMERIC*) }
 
 tyident = @{ 'A'..'Z' ~ ASCII_ALPHANUMERIC* }
 
@@ -10,7 +12,11 @@ tytuple = { "(" ~ ty ~ ("," ~ ty)+ ~ ","? ~ ")" }
 
 tyrecord = { "{" ~ identifier ~ ":" ~ ty ~ ("," ~ identifier ~ ":" ~ ty)* ~ ","? ~ "}" }
 
-ty = { unit | tytuple | tyrecord | tyident }
+tyfun = { tyterm ~ "->" ~ ty }
+
+tyterm = _{ tyident | "(" ~ ty ~ ")" }
+
+ty = { tyfun | unit | tytuple | tyrecord | tyterm }
 
 int = @{
     "-"?
@@ -33,9 +39,13 @@ char = {
 
 record = { "{" ~ identifier ~ "=" ~ expr ~ ("," ~ identifier ~ "=" ~ expr)* ~ ","? ~ "}" }
 
-letbind = { ( "let" ~ identifier ~ "=" ~ expr )+ ~ "in" ~ expr }
+letbind = { ( "let" ~ identifier ~ "=" ~ expr )+ ~ "in" ~ expr ~ "end" }
 
-expr = { letbind | unit | tuple | record | int | bool | string | identifier }
+lambda = { "lambda" ~ identifier ~ "->" ~ expr }
+
+term = { letbind | unit | tuple | record | int | bool | string | lambda | identifier | "(" ~ expr ~ ")" }
+
+expr = { term+ }
 
 insert = { "insert" ~ expr ~ "into" ~ identifier }
 
