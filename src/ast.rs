@@ -3,7 +3,7 @@ use std::fmt;
 
 pub type Ident = String;
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub enum Ty {
     Int,
     Bool,
