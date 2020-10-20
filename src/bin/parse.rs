@@ -59,7 +59,10 @@ fn start_type() -> Result<()> {
             Ok(line) => {
                 let parsed = Parser::parse(Rule::ty, &line)?.next().unwrap();
                 println!("{:?}", parsed);
-                println!("{:?}", parse_ty(parsed.into_inner().next().unwrap()));
+                match parse_ty(parsed.into_inner().next().unwrap()) {
+                    Ok(ty) => println!("{}", ty),
+                    Err(e) => println!("Error: {}", e),
+                }
                 rl.add_history_entry(line);
             }
             Err(ReadlineError::Interrupted) => break Err(anyhow!("unimplemented")),
