@@ -35,8 +35,26 @@ pub fn unify(
                 .collect();
             Box::new(unify(tmp.into_iter()))
         }
-        Some((Ty::Tuple(tys1), Ty::Tuple(tys2))) => unimplemented!(),
-        Some((Ty::Record(tys1), Ty::Record(tys2))) => unimplemented!(),
+        Some((Ty::Tuple(tys1), Ty::Tuple(tys2))) if tys1.len() == tys2.len() => {
+            let tmp: Vec<_> = tys1.into_iter().zip(tys2).chain(constraints).collect();
+            Box::new(unify(tmp.into_iter()))
+        }
+        Some((Ty::Record(mut tys1), Ty::Record(mut tys2)))
+            if tys1.len() == tys2.len()
+                && tys1.iter().map(|(x, _)| x).collect::<Vec<_>>().sort()
+                    == tys2.iter().map(|(x, _)| x).collect::<Vec<_>>().sort() =>
+        {
+            tys1.sort_by_key(|(k, _)| k.clone());
+            tys2.sort_by_key(|(k, _)| k.clone());
+
+            let tmp: Vec<_> = tys1
+                .into_iter()
+                .map(|(_, x)| x)
+                .zip(tys2.into_iter().map(|(_, x)| x))
+                .chain(constraints)
+                .collect();
+            Box::new(unify(tmp.into_iter()))
+        }
         Some((t1, t2)) => Box::new(iter::once(Err(format!(
             "Could not unify {} and {}",
             t1, t2
@@ -322,7 +340,7 @@ mod test {
         );
 
         assert_eq!(
-            Ok(vec!(("a".to_string(), Int), ("b".to_string(), Bool))),
+            Ok(vec!(("b".to_string(), Bool), ("a".to_string(), Int))),
             super::unify(
                 vec!((
                     Tuple(vec!(Int, Bool)),
@@ -349,7 +367,7 @@ mod test {
         );
 
         assert_eq!(
-            Ok(vec!(("a".to_string(), Int), ("b".to_string(), Bool))),
+            Ok(vec!(("b".to_string(), Bool), ("a".to_string(), Int))),
             super::unify(
                 vec!((
                     Record(vec!(("x".to_string(), Int), ("y".to_string(), Bool))),
