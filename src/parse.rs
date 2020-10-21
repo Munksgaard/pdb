@@ -227,7 +227,7 @@ mod test {
     fn parse_exprs_helper(input: &str) -> Expr {
         super::parse_exprs(
             Parser::parse(Rule::expr, input)
-                .unwrap()
+                .unwrap_or_else(|e| panic!("{}", e))
                 .next()
                 .unwrap()
                 .into_inner(),
