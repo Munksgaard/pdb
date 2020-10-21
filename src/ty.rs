@@ -102,6 +102,7 @@ pub fn infer(
     match expr {
         Expr::Int(_) => Ok(Ty::Int),
         Expr::Bool(_) => Ok(Ty::Bool),
+        Expr::String(_) => Ok(Ty::String),
         Expr::Ident(ident) => {
             let scheme = env
                 .get(ident)
@@ -172,8 +173,7 @@ pub fn infer(
 
             Ok(Ty::Record(res))
         }
-
-        e => unimplemented!("Expr {:?} not supported", e),
+        Expr::Unit => Ok(Ty::Unit),
     }
 }
 
@@ -729,6 +729,10 @@ mod test {
             "{ x: (x_0_1 -> x_0_1), y: Int, z: Bool }",
             infer("{ x = let id = lambda x -> x in id end, y = 42, z = true }")
         );
+
+        assert_eq!("()", infer("()"));
+
+        assert_eq!("String", infer("\"Hello World!\""));
     }
 
     #[test]
