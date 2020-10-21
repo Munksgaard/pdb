@@ -104,7 +104,7 @@ impl fmt::Display for Expr {
                     write!(f, "let {} = {} in ", ident, expr)?;
                 }
 
-                write!(f, "{}", e)
+                write!(f, "{} end", e)
             }
             Expr::Apply(e1, e2) => write!(f, "({} {})", e1, e2), // TODO: Handle parenthesis
             Expr::Lambda(ident, expr) => write!(f, "lambda {} -> {}", ident, expr),
