@@ -78,7 +78,7 @@ pub struct NameSource {
 }
 
 impl NameSource {
-    fn new() -> Self {
+    pub fn new() -> Self {
         NameSource { counter: 0 }
     }
 
@@ -86,6 +86,12 @@ impl NameSource {
         let i = self.counter;
         self.counter += 1;
         format!("{}_{}", name, i)
+    }
+}
+
+impl Default for NameSource {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

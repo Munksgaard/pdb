@@ -2,8 +2,9 @@ use crate::ast::{Ident, Statement, TableDefinition};
 use crate::environment::Environment;
 use crate::eval::eval;
 use crate::object::Object;
-use crate::ty::matches_type;
+use crate::ty;
 use anyhow::{anyhow, Context, Result};
+use std::collections::HashMap;
 use std::sync::mpsc::{Receiver, Sender};
 
 type Tables = Vec<(Ident, TableDefinition, Vec<Object>)>;
@@ -30,7 +31,16 @@ pub fn start(rx: Receiver<(Statement, Sender<Result<String>>)>) -> Result<()> {
                 if let Some((_, def, objs)) =
                     tables.iter_mut().find(|(ident2, _, _)| ident2 == &ident)
                 {
-                    if matches_type(&expr, &def.ty) {
+                    // infer type of expr and try to unify with def.ty
+                    let ty = ty::infer(
+                        &mut HashMap::new(),
+                        &mut ty::NameSource::new(),
+                        &HashMap::new(),
+                        &expr,
+                    )
+                    .map_err(|e| anyhow!("{}", e))?;
+
+                    if ty::unify(std::iter::once((ty.clone(), def.ty.clone()))).all(|x| x.is_ok()) {
                         let result = eval(&Environment::new(), expr)?;
                         objs.push(result);
                         tx.send(Ok(String::from("Inserted 1\n")))
