@@ -687,4 +687,36 @@ mod test {
             e => panic!("Wrong result: {:?}", e),
         }
     }
+
+    #[test]
+    fn infer_and_print() {
+        use pest::Parser;
+        fn infer(input: &str) -> String {
+            let e = crate::parse::parse_exprs(
+                crate::parse::Parser::parse(crate::parse::Rule::expr, input)
+                    .unwrap_or_else(|e| panic!("{}", e))
+                    .next()
+                    .unwrap()
+                    .into_inner(),
+            )
+            .unwrap();
+            let ty = super::infer(
+                0,
+                &mut HashMap::new(),
+                &mut NameSource::new(),
+                &mut HashMap::new(),
+                &e,
+            )
+            .unwrap();
+
+            format!("{}", ty)
+        }
+
+        assert_eq!("Int", infer("4"));
+
+        assert_eq!(
+            "(x_0_1 -> x_0_1)",
+            infer("let id = lambda x -> x in id end")
+        );
+    }
 }
