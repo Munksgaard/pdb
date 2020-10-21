@@ -714,4 +714,28 @@ mod test {
             infer("(let id = lambda x -> x in id end, 42, true)")
         );
     }
+
+    #[test]
+    fn parse_and_infer() {
+        use pest::Parser;
+        fn infer(input: &str) -> Result<Ty, String> {
+            let e = crate::parse::parse_exprs(
+                crate::parse::Parser::parse(crate::parse::Rule::expr, input)
+                    .unwrap_or_else(|e| panic!("{}", e))
+                    .next()
+                    .unwrap()
+                    .into_inner(),
+            )
+            .unwrap();
+            super::infer(
+                0,
+                &mut HashMap::new(),
+                &mut NameSource::new(),
+                &mut HashMap::new(),
+                &e,
+            )
+        }
+
+        assert!(infer("lambda x -> x x").is_err());
+    }
 }
