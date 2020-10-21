@@ -93,7 +93,6 @@ impl NameSource {
 /// Inspiration from this paper:
 /// https://www.cl.cam.ac.uk/teaching/1415/L28/type-inference.pdf
 pub fn infer(
-    indent: usize,
     global_sub: &mut GlobalSub,
     name_src: &mut NameSource,
     env: &Env,
@@ -112,20 +111,20 @@ pub fn infer(
         Expr::Let(binds, expr) => {
             let mut env = env.clone();
             for (ident, e) in binds {
-                let ty = infer(indent + 1, global_sub, name_src, &env, e)?;
+                let ty = infer(global_sub, name_src, &env, e)?;
 
                 let scheme = generalize(&env, ty);
 
                 env.insert(ident.clone(), scheme);
             }
 
-            infer(indent + 1, global_sub, name_src, &env, expr)
+            infer(global_sub, name_src, &env, expr)
         }
         Expr::Lambda(ident, e) => {
             let freshvar = name_src.fresh(&ident);
             let mut env = env.clone();
             env.insert(ident.clone(), (vec![], Ty::Var(freshvar.clone())));
-            let rhs = infer(indent + 1, global_sub, name_src, &env, e)?;
+            let rhs = infer(global_sub, name_src, &env, e)?;
 
             let lhs = global_sub
                 .get(&freshvar)
@@ -135,8 +134,8 @@ pub fn infer(
             Ok(Ty::Fun(Box::new(lhs), Box::new(rhs)))
         }
         Expr::Apply(e1, e2) => {
-            let t1 = infer(indent + 1, global_sub, name_src, env, e1)?;
-            let t2 = infer(indent + 1, global_sub, name_src, env, e2)?;
+            let t1 = infer(global_sub, name_src, env, e1)?;
+            let t2 = infer(global_sub, name_src, env, e2)?;
             let fresh = name_src.fresh(&"arg");
             let substs = unify(iter::once((
                 t1,
@@ -157,7 +156,7 @@ pub fn infer(
             let mut res = Vec::new();
 
             for expr in exprs {
-                res.push(infer(indent + 1, global_sub, name_src, env, expr)?);
+                res.push(infer(global_sub, name_src, env, expr)?);
             }
 
             Ok(Ty::Tuple(res))
@@ -165,10 +164,7 @@ pub fn infer(
         Expr::Record(recs) => {
             let mut res = Vec::new();
             for (ident, expr) in recs {
-                res.push((
-                    ident.clone(),
-                    infer(indent + 1, global_sub, name_src, env, expr)?,
-                ));
+                res.push((ident.clone(), infer(global_sub, name_src, env, expr)?));
             }
 
             Ok(Ty::Record(res))
@@ -525,7 +521,6 @@ mod test {
                 Box::new(Ty::Var("a_0".to_string()))
             )),
             super::infer(
-                0,
                 &mut HashMap::new(),
                 &mut NameSource::new(),
                 &mut HashMap::new(),
@@ -536,7 +531,6 @@ mod test {
         assert_eq!(
             Ok(Ty::Int),
             super::infer(
-                0,
                 &mut HashMap::new(),
                 &mut NameSource::new(),
                 &mut HashMap::new(),
@@ -550,7 +544,6 @@ mod test {
         assert_eq!(
             Ok(Ty::Bool),
             super::infer(
-                0,
                 &mut HashMap::new(),
                 &mut NameSource::new(),
                 &mut HashMap::new(),
@@ -571,7 +564,6 @@ mod test {
                 Box::new(Ty::Var("y_0_1".to_string()))
             )),
             super::infer(
-                0,
                 &mut HashMap::new(),
                 &mut NameSource::new(),
                 &mut HashMap::new(),
@@ -590,7 +582,6 @@ mod test {
         let mut subs = HashMap::new();
 
         let res = super::infer(
-            0,
             &mut subs,
             &mut NameSource::new(),
             &mut env,
@@ -640,7 +631,6 @@ mod test {
             )
             .unwrap();
             let ty = super::infer(
-                0,
                 &mut HashMap::new(),
                 &mut NameSource::new(),
                 &mut HashMap::new(),
@@ -686,7 +676,6 @@ mod test {
             )
             .unwrap();
             super::infer(
-                0,
                 &mut HashMap::new(),
                 &mut NameSource::new(),
                 &mut HashMap::new(),
