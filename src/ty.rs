@@ -99,8 +99,7 @@ pub fn infer(
     env: &Env,
     expr: &Expr,
 ) -> Result<Ty, String> {
-    println!("{}expr: {}, env: {:?}", "  ".repeat(indent), expr, env);
-    let res = match expr {
+    match expr {
         Expr::Int(_) => Ok(Ty::Int),
         Expr::Bool(_) => Ok(Ty::Bool),
         Expr::Ident(ident) => {
@@ -115,13 +114,6 @@ pub fn infer(
                 let ty = infer(indent + 1, global_sub, name_src, &env, e)?;
 
                 let scheme = generalize(&env, ty);
-
-                println!(
-                    "{}scheme: ({:?}, {})",
-                    "  ".repeat(indent),
-                    scheme.0,
-                    scheme.1
-                );
 
                 env.insert(ident.clone(), scheme);
             }
@@ -162,16 +154,7 @@ pub fn infer(
         }
 
         e => unimplemented!("Expr {:?} not supported", e),
-    };
-
-    print!("{}", "  ".repeat(indent));
-
-    match res {
-        Ok(ref x) => println!("Ok:  {}, env: {:?}", x, env),
-        Err(ref e) => println!("Err: {}, env: {:?}", e, env),
     }
-
-    res
 }
 
 pub fn matches_type(expr: &Expr, ty: &Ty) -> bool {
@@ -208,8 +191,6 @@ fn instantiate(scheme: &Scheme, name_src: &mut NameSource) -> Ty {
 
 fn generalize(env: &Env, ty: Ty) -> Scheme {
     let env_fvs: HashSet<_> = env.fv().collect();
-    println!("env_fvs: {:?}", env_fvs);
-    println!("ty_fvs: {:?}", ty.fv().collect::<HashSet<_>>());
     (
         ty.fv()
             .collect::<HashSet<_>>()
