@@ -86,7 +86,7 @@ impl fmt::Display for Expr {
                 write!(f, ")")
             }
             Expr::Unit => write!(f, "()"),
-            Expr::String(s) => write!(f, "{}", s),
+            Expr::String(s) => write!(f, "{:?}", s),
             Expr::Ident(ident) => write!(f, "{}", ident),
             Expr::Record(recs) => {
                 write!(f, "{{ ")?;
@@ -151,6 +151,17 @@ mod test {
                         Box::new(Expr::Ident("id".to_string()))
                     )),
                     Box::new(Expr::Ident("x".to_string()))
+                )
+            )
+        );
+
+        assert_eq!(
+            "(foo \"Hello World!\")".to_string(),
+            format!(
+                "{}",
+                Expr::Apply(
+                    Box::new(Expr::Ident("foo".to_string())),
+                    Box::new(Expr::String("Hello World!".to_string()))
                 )
             )
         );
