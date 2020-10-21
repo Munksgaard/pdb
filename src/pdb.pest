@@ -1,6 +1,6 @@
 WHITESPACE = _{ " " | "\n" }
 
-keyword = { "let" | "insert" | "select" | "from" | "into" | "create" | "end" | "lambda" }
+keyword = { "let" | "insert" | "select" | "from" | "into" | "create" | "end" | "lambda" | "in" }
 
 identifier = @{ !keyword ~ ('a'..'z' ~ ASCII_ALPHANUMERIC*) }
 

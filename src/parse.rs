@@ -289,6 +289,26 @@ mod test {
             Lambda("f".to_string(), Box::new(Ident("x".to_string()))),
             parse_exprs_helper(&"lambda f -> x")
         );
+        assert_eq!(
+            Let(
+                vec!(("x".to_string(), Int(42))),
+                Box::new(Ident("x".to_string()))
+            ),
+            parse_exprs_helper(&"let x = 42 in x end")
+        );
+    }
+
+    #[test]
+    fn parse_and_print_is_isomorph() {
+        fn isomorph(input: &str) {
+            let s = format!("{}", parse_exprs_helper(input));
+            assert_eq!(input, s);
+        }
+        isomorph("42");
+
+        isomorph("let x = 42 in x end");
+
+        isomorph("let id = lambda x -> x in id end");
     }
 
     #[test]
