@@ -45,7 +45,7 @@ impl fmt::Display for Ty {
                 write!(f, " }}")
             }
             Ty::Var(ident) => write!(f, "{}", ident),
-            Ty::Fun(lhs, rhs) => write!(f, "{} -> {}", lhs, rhs),
+            Ty::Fun(lhs, rhs) => write!(f, "({} -> {})", lhs, rhs), // TODO: Handle parenthesis
         }
     }
 }
@@ -106,7 +106,7 @@ impl fmt::Display for Expr {
 
                 write!(f, "{}", e)
             }
-            Expr::Apply(e1, e2) => write!(f, "{} {}", e1, e2), // TODO: Handle parenthesis
+            Expr::Apply(e1, e2) => write!(f, "({} {})", e1, e2), // TODO: Handle parenthesis
             Expr::Lambda(ident, expr) => write!(f, "lambda {} -> {}", ident, expr),
         }
     }
@@ -128,7 +128,7 @@ mod test {
     #[test]
     fn display_expr() {
         assert_eq!(
-            "foo (id x)".to_string(),
+            "(foo (id x))".to_string(),
             format!(
                 "{}",
                 Expr::Apply(
@@ -142,15 +142,15 @@ mod test {
         );
 
         assert_eq!(
-            "foo id x".to_string(),
+            "((foo id) x)".to_string(),
             format!(
                 "{}",
                 Expr::Apply(
                     Box::new(Expr::Apply(
-                        Box::new(Expr::Ident("id".to_string())),
-                        Box::new(Expr::Ident("x".to_string()))
+                        Box::new(Expr::Ident("foo".to_string())),
+                        Box::new(Expr::Ident("id".to_string()))
                     )),
-                    Box::new(Expr::Ident("foo".to_string()))
+                    Box::new(Expr::Ident("x".to_string()))
                 )
             )
         );
