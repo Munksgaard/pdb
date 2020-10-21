@@ -69,6 +69,49 @@ pub enum Expr {
     Lambda(Ident, Box<Expr>),
 }
 
+impl fmt::Display for Expr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Expr::Int(i) => write!(f, "{}", i),
+            Expr::Bool(b) => write!(f, "{}", b),
+            Expr::Tuple(exprs) => {
+                write!(f, "(")?;
+                for (i, expr) in exprs.iter().enumerate() {
+                    if i != 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}", expr)?;
+                }
+
+                write!(f, ")")
+            }
+            Expr::Unit => write!(f, "()"),
+            Expr::String(s) => write!(f, "{}", s),
+            Expr::Ident(ident) => write!(f, "{}", ident),
+            Expr::Record(recs) => {
+                write!(f, "{{ ")?;
+                for (i, (ident, expr)) in recs.iter().enumerate() {
+                    if i != 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}: {}", ident, expr)?;
+                }
+
+                write!(f, " }}")
+            }
+            Expr::Let(binds, e) => {
+                for (ident, expr) in binds.iter() {
+                    write!(f, "let {} = {} in ", ident, expr)?;
+                }
+
+                write!(f, "{}", e)
+            }
+            Expr::Apply(e1, e2) => write!(f, "{} {}", e1, e2), // TODO: Handle parenthesis
+            Expr::Lambda(ident, expr) => write!(f, "lambda {} -> {}", ident, expr),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum Statement {
     Create(Ident, TableDefinition),
