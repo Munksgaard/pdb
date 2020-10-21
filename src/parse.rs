@@ -125,18 +125,15 @@ pub fn parse_term(term: Pair<Rule>) -> Result<Expr, Error<Rule>> {
 }
 
 pub fn parse_exprs(mut exprs: Pairs<Rule>) -> Result<Expr, Error<Rule>> {
-    println!("expr: {:?}", exprs);
     let mut res = parse_term(exprs.next().unwrap().into_inner().next().unwrap())?;
 
     for term in exprs {
-        println!("term: {:?}", term);
         res = Expr::Apply(
             Box::new(res),
             Box::new(parse_term(term.into_inner().next().unwrap())?),
         );
     }
 
-    println!("res: {:?}", res);
     Ok(res)
 }
 
@@ -147,7 +144,6 @@ pub fn parse_select(mut pairs: Pairs<Rule>) -> Result<Statement, Error<Rule>> {
 }
 
 pub fn parse_insert(mut pairs: Pairs<Rule>) -> Result<Statement, Error<Rule>> {
-    println!("parse_insert: {:?}", &pairs);
     let expr = parse_exprs(pairs.next().unwrap().into_inner())?;
     let ident = pairs.next().unwrap().as_str();
 
@@ -180,8 +176,6 @@ pub fn parse(input: &str) -> Result<Statement, Error<Rule>> {
         .unwrap()
         .next()
         .unwrap();
-
-    println!("parse: {:?}", statement);
 
     parse_statement(statement)
 }
