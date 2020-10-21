@@ -152,6 +152,15 @@ pub fn infer(
 
             Ok(lhs)
         }
+        Expr::Tuple(exprs) => {
+            let mut res = Vec::new();
+
+            for expr in exprs {
+                res.push(infer(indent + 1, global_sub, name_src, env, expr)?);
+            }
+
+            Ok(Ty::Tuple(res))
+        }
 
         e => unimplemented!("Expr {:?} not supported", e),
     }
@@ -698,6 +707,11 @@ mod test {
         assert_eq!(
             "(x_0_1 -> x_0_1)",
             infer("let id = lambda x -> x in id end")
+        );
+
+        assert_eq!(
+            "((x_0_1 -> x_0_1), Int, Bool)",
+            infer("(let id = lambda x -> x in id end, 42, true)")
         );
     }
 }
