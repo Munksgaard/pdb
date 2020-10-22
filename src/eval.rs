@@ -35,8 +35,22 @@ pub fn eval(env: &Environment, expr: Expr) -> Result<Object> {
                 )?;
             eval(&env_, *e)
         }
-        Expr::Apply(_, _) => unimplemented!("apply"),
-        Expr::Lambda(_, _) => unimplemented!("lambda"),
+        Expr::Apply(e1, e2) => {
+            let obj = eval(env, *e2)?;
+            if let Object::Lambda(f) = eval(&env, *e1)? {
+                f(obj)
+            } else {
+                unreachable!()
+            }
+        }
+        Expr::Lambda(ident, e) => {
+            let env = env.clone();
+            let ident = ident.clone();
+            Ok(Object::Lambda(Box::new(move |obj| {
+                let env = env.insert(&ident, obj);
+                eval(&env, *e)
+            })))
+        }
     }
 }
 
@@ -47,51 +61,57 @@ mod test {
     #[test]
     fn eval_int() {
         assert_eq!(
-            eval(&Environment::new(), Expr::Int(42)).unwrap(),
-            Object::Int(42)
+            "42",
+            format!("{}", eval(&Environment::new(), Expr::Int(42)).unwrap())
         );
     }
 
     #[test]
     fn eval_bool() {
         assert_eq!(
-            eval(&Environment::new(), Expr::Bool(true)).unwrap(),
-            Object::Bool(true)
+            "true",
+            format!("{}", eval(&Environment::new(), Expr::Bool(true)).unwrap())
         );
     }
 
     #[test]
     fn eval_tuple() {
         assert_eq!(
-            eval(
-                &Environment::new(),
-                Expr::Tuple(vec!(Expr::Bool(false), Expr::Int(43)))
-            )
-            .unwrap(),
-            Object::Tuple(vec!(Object::Bool(false), Object::Int(43)))
+            "(false, 43)",
+            format!(
+                "{}",
+                eval(
+                    &Environment::new(),
+                    Expr::Tuple(vec!(Expr::Bool(false), Expr::Int(43)))
+                )
+                .unwrap()
+            ),
         );
     }
 
     #[test]
     fn eval_unit() {
-        assert_eq!(eval(&Environment::new(), Expr::Unit).unwrap(), Object::Unit);
+        assert_eq!(
+            "()",
+            format!("{}", eval(&Environment::new(), Expr::Unit).unwrap())
+        );
     }
 
     #[test]
     fn eval_record() {
         assert_eq!(
-            eval(
-                &Environment::new(),
-                Expr::Record(vec!(
-                    (String::from("x"), Expr::Bool(false)),
-                    (String::from("y"), Expr::Int(42))
-                ))
+            "{x = false, y = 42}",
+            format!(
+                "{}",
+                eval(
+                    &Environment::new(),
+                    Expr::Record(vec!(
+                        (String::from("x"), Expr::Bool(false)),
+                        (String::from("y"), Expr::Int(42))
+                    ))
+                )
+                .unwrap()
             )
-            .unwrap(),
-            Object::Record(vec!(
-                (String::from("x"), Object::Bool(false)),
-                (String::from("y"), Object::Int(42))
-            ))
         );
     }
 }

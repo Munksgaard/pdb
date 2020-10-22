@@ -1,8 +1,7 @@
 use crate::ast::Ident;
-
+use anyhow::Result;
 use std::fmt;
 
-#[derive(Debug, PartialEq, Clone)]
 pub enum Object {
     Int(i64),
     Bool(bool),
@@ -10,6 +9,19 @@ pub enum Object {
     Unit,
     String(String),
     Record(Vec<(Ident, Object)>),
+    Lambda(Box<dyn FnOnce(Object) -> Result<Object>>),
+}
+
+impl fmt::Debug for Object {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
+
+impl Clone for Object {
+    fn clone(&self) -> Self {
+        unimplemented!("clone")
+    }
 }
 
 impl fmt::Display for Object {
@@ -47,6 +59,7 @@ impl fmt::Display for Object {
 
                 write!(f, "}}")
             }
+            Object::Lambda(_) => write!(f, "<lambda>"),
         }
     }
 }
