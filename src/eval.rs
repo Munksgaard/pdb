@@ -35,22 +35,8 @@ pub fn eval(env: &Environment, expr: Expr) -> Result<Object> {
                 )?;
             eval(&env_, *e)
         }
-        Expr::Apply(e1, e2) => {
-            let obj = eval(env, *e2)?;
-            if let Object::Lambda(f) = eval(&env, *e1)? {
-                f(obj)
-            } else {
-                unreachable!()
-            }
-        }
-        Expr::Lambda(ident, e) => {
-            let env = env.clone();
-            let ident = ident.clone();
-            Ok(Object::Lambda(Box::new(move |obj| {
-                let env = env.insert(&ident, obj);
-                eval(&env, *e)
-            })))
-        }
+        Expr::Apply(e1, e2) => unimplemented!(),
+        Expr::Lambda(ident, e) => unimplemented!(),
     }
 }
 

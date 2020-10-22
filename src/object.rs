@@ -9,7 +9,7 @@ pub enum Object {
     Unit,
     String(String),
     Record(Vec<(Ident, Object)>),
-    Lambda(Box<dyn FnOnce(Object) -> Result<Object>>),
+    Lambda(Box<dyn Fn(Object) -> Result<Object>>),
 }
 
 impl fmt::Debug for Object {
@@ -20,7 +20,16 @@ impl fmt::Debug for Object {
 
 impl Clone for Object {
     fn clone(&self) -> Self {
-        unimplemented!("clone")
+        use Object::*;
+        match self {
+            Int(i) => Int(*i),
+            Bool(b) => Bool(*b),
+            Tuple(objs) => Tuple(objs.clone()),
+            Unit => Unit,
+            String(s) => String(s.clone()),
+            Record(recs) => Record(recs.clone()),
+            Lambda(_) => panic!("Cannot clone function objects"),
+        }
     }
 }
 
