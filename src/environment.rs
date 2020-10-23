@@ -1,29 +1,33 @@
 use crate::object::*;
 use anyhow::{anyhow, Result};
-use std::collections::HashMap;
+use std::sync::Arc;
 
 #[derive(Clone)]
-pub struct Environment {
-    inner: HashMap<String, Object>,
+pub enum Environment {
+    Node(String, Object, Arc<Environment>),
+    Empty,
 }
 
 impl Environment {
     pub fn new() -> Environment {
-        Environment {
-            inner: HashMap::new(),
+        Environment::Empty
+    }
+
+    pub fn lookup(&self, ident: &str) -> Result<&Object> {
+        match self {
+            Environment::Node(s, obj, inner) => {
+                if s == ident {
+                    Ok(obj)
+                } else {
+                    inner.lookup(ident)
+                }
+            }
+            Environment::Empty => Err(anyhow!("Identifier {} not found", ident)),
         }
     }
 
-    pub fn lookup(&self, ident: &str) -> Result<Object> {
-        self.inner
-            .get(ident)
-            .cloned()
-            .ok_or_else(|| anyhow!("Identifier {} not found", ident))
-    }
-
-    pub fn insert(mut self, ident: &str, e: Object) -> Self {
-        self.inner.insert(ident.to_string(), e);
-        self
+    pub fn insert(&self, ident: &str, obj: Object) -> Environment {
+        Environment::Node(ident.to_string(), obj, Arc::new(self.clone()))
     }
 }
 
