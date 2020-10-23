@@ -2,10 +2,14 @@ use crate::ast::*;
 use crate::environment::Environment;
 use crate::object::Object;
 use anyhow::Result;
+use std::sync::Arc;
 
 pub fn eval(env: &Environment, expr: Expr) -> Result<Object> {
     match expr {
-        Expr::Int(i) => Ok(Object::Int(i)),
+        Expr::Int(i) => {
+            let res = Object::Int(i);
+            Ok(res)
+        }
         Expr::Bool(b) => Ok(Object::Bool(b)),
         Expr::Tuple(exprs) => Ok(Object::Tuple(
             exprs
@@ -22,7 +26,7 @@ pub fn eval(env: &Environment, expr: Expr) -> Result<Object> {
                 .collect::<Result<Vec<_>>>()?;
             Ok(Object::Record(res))
         }
-        Expr::Ident(ident) => env.lookup(&ident),
+        Expr::Ident(ident) => env.lookup(&ident).map(|x| x.clone()),
         Expr::Let(binds, e) => {
             let env_ = binds
                 .into_iter()
@@ -35,8 +39,19 @@ pub fn eval(env: &Environment, expr: Expr) -> Result<Object> {
                 )?;
             eval(&env_, *e)
         }
-        Expr::Apply(e1, e2) => unimplemented!(),
-        Expr::Lambda(ident, e) => unimplemented!(),
+        Expr::Apply(e1, e2) => {
+            let obj = eval(env, *e2)?;
+            match eval(env, *e1)? {
+                Object::Closure(f) => f(obj),
+                other => unreachable!("{}", other),
+            }
+        }
+        Expr::Lambda(ident, e) => {
+            let env = env.clone();
+            Ok(Object::Closure(Arc::new(move |obj| {
+                eval(&env.insert(&ident, obj), *e.clone())
+            })))
+        }
     }
 }
 
@@ -97,6 +112,41 @@ mod test {
                     ))
                 )
                 .unwrap()
+            )
+        );
+    }
+
+    use pest::Parser;
+    fn parse_and_eval(input: &str) -> Result<Object> {
+        let e = crate::parse::parse_exprs(
+            crate::parse::Parser::parse(crate::parse::Rule::expr, input)
+                .unwrap_or_else(|e| panic!("{}", e))
+                .next()
+                .unwrap()
+                .into_inner(),
+        )
+        .unwrap();
+        eval(&Environment::new(), e)
+    }
+
+    #[test]
+    fn eval_id() {
+        assert_eq!(
+            "42",
+            format!(
+                "{}",
+                parse_and_eval("let id = lambda x -> x in id 42 end").unwrap()
+            )
+        );
+    }
+
+    #[test]
+    fn eval_first() {
+        assert_eq!(
+            "42",
+            format!(
+                "{}",
+                parse_and_eval("let first = lambda x -> lambda y -> x in first 42 43 end").unwrap()
             )
         );
     }
