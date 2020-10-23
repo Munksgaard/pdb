@@ -119,6 +119,16 @@ pub enum Statement {
     Select(Ident),
 }
 
+impl fmt::Display for Statement {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Statement::Create(ident, def) => write!(f, "create table {} {}", ident, def.ty),
+            Statement::Insert(ident, expr) => write!(f, "insert {} into {}", expr, ident),
+            Statement::Select(ident) => write!(f, "select from {}", ident),
+        }
+    }
+}
+
 pub type Statements = Vec<Statement>;
 
 #[cfg(test)]
