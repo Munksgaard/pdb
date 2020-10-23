@@ -3,6 +3,7 @@ name = "pdb"
 version = "0.1.0"
 authors = ["Philip Munksgaard <philip@munksgaard.me>"]
 edition = "2018"
+default-run = "pdb"
 
 [dependencies]
 pest = "2.1.1"

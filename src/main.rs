@@ -19,7 +19,7 @@ struct Config {
 }
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "pdbcli", about = "The pdb server.")]
+#[structopt(name = "pdb", about = "The pdb server.")]
 struct Args {
     #[structopt(flatten)]
     config: Config,
@@ -28,8 +28,6 @@ struct Args {
 #[paw::main]
 #[tokio::main]
 async fn main(args: Args) -> Result<()> {
-    println!("started");
-
     // Create a simple streaming channel
     let (tx, rx) = channel();
 
