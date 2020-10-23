@@ -1,7 +1,9 @@
 use crate::ast::Ident;
 use anyhow::Result;
 use std::fmt;
+use std::sync::Arc;
 
+#[derive(Clone)]
 pub enum Object {
     Int(i64),
     Bool(bool),
@@ -9,27 +11,12 @@ pub enum Object {
     Unit,
     String(String),
     Record(Vec<(Ident, Object)>),
-    Lambda(Box<dyn Fn(Object) -> Result<Object>>),
+    Closure(Arc<dyn Fn(Object) -> Result<Object>>),
 }
 
 impl fmt::Debug for Object {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(self, f)
-    }
-}
-
-impl Clone for Object {
-    fn clone(&self) -> Self {
-        use Object::*;
-        match self {
-            Int(i) => Int(*i),
-            Bool(b) => Bool(*b),
-            Tuple(objs) => Tuple(objs.clone()),
-            Unit => Unit,
-            String(s) => String(s.clone()),
-            Record(recs) => Record(recs.clone()),
-            Lambda(_) => panic!("Cannot clone function objects"),
-        }
     }
 }
 
@@ -68,7 +55,7 @@ impl fmt::Display for Object {
 
                 write!(f, "}}")
             }
-            Object::Lambda(_) => write!(f, "<lambda>"),
+            Object::Closure(_) => write!(f, "<lambda>"),
         }
     }
 }
