@@ -1,8 +1,9 @@
 use crate::ast::Ident;
-
+use anyhow::Result;
 use std::fmt;
+use std::sync::Arc;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone)]
 pub enum Object {
     Int(i64),
     Bool(bool),
@@ -10,6 +11,13 @@ pub enum Object {
     Unit,
     String(String),
     Record(Vec<(Ident, Object)>),
+    Closure(Arc<dyn Fn(Object) -> Result<Object>>),
+}
+
+impl fmt::Debug for Object {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
 }
 
 impl fmt::Display for Object {
@@ -47,6 +55,7 @@ impl fmt::Display for Object {
 
                 write!(f, "}}")
             }
+            Object::Closure(_) => write!(f, "<lambda>"),
         }
     }
 }
