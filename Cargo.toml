@@ -1,7 +1,7 @@
 [package]
 name = "pdb"
 version = "0.1.0"
-authors = ["Philip Munksgaard <pmunksgaard@gmail.com>"]
+authors = ["Philip Munksgaard <philip@munksgaard.me>"]
 edition = "2018"
 
 [dependencies]
