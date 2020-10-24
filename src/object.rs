@@ -1,7 +1,7 @@
 use crate::ast::Ident;
 use anyhow::Result;
 use std::fmt;
-use std::sync::Arc;
+use std::rc::Rc;
 
 #[derive(Clone)]
 pub enum Object {
@@ -11,7 +11,7 @@ pub enum Object {
     Unit,
     String(String),
     Record(Vec<(Ident, Object)>),
-    Closure(Arc<dyn Fn(Object) -> Result<Object>>),
+    Closure(Rc<dyn Fn(Object) -> Result<Object>>),
 }
 
 impl fmt::Debug for Object {

@@ -2,7 +2,7 @@ use crate::ast::*;
 use crate::environment::Environment;
 use crate::object::Object;
 use anyhow::Result;
-use std::sync::Arc;
+use std::rc::Rc;
 
 pub fn eval(env: &Environment, expr: Expr) -> Result<Object> {
     match expr {
@@ -48,7 +48,7 @@ pub fn eval(env: &Environment, expr: Expr) -> Result<Object> {
         }
         Expr::Lambda(ident, e) => {
             let env = env.clone();
-            Ok(Object::Closure(Arc::new(move |obj| {
+            Ok(Object::Closure(Rc::new(move |obj| {
                 eval(&env.insert(&ident, obj), *e.clone())
             })))
         }

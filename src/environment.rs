@@ -1,10 +1,10 @@
 use crate::object::*;
 use anyhow::{anyhow, Result};
-use std::sync::Arc;
+use std::rc::Rc;
 
 #[derive(Clone)]
 pub enum Environment {
-    Node(String, Object, Arc<Environment>),
+    Node(String, Object, Rc<Environment>),
     Empty,
 }
 
@@ -27,7 +27,7 @@ impl Environment {
     }
 
     pub fn insert(&self, ident: &str, obj: Object) -> Environment {
-        Environment::Node(ident.to_string(), obj, Arc::new(self.clone()))
+        Environment::Node(ident.to_string(), obj, Rc::new(self.clone()))
     }
 }
 
