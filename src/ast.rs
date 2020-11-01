@@ -1,6 +1,9 @@
 use serde_derive::{Deserialize, Serialize};
 use std::fmt;
 
+#[cfg(test)]
+mod test;
+
 pub type Ident = String;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
@@ -130,50 +133,3 @@ impl fmt::Display for Statement {
 }
 
 pub type Statements = Vec<Statement>;
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn display_expr() {
-        assert_eq!(
-            "(foo (id x))".to_string(),
-            format!(
-                "{}",
-                Expr::Apply(
-                    Box::new(Expr::Ident("foo".to_string())),
-                    Box::new(Expr::Apply(
-                        Box::new(Expr::Ident("id".to_string())),
-                        Box::new(Expr::Ident("x".to_string()))
-                    ))
-                )
-            )
-        );
-
-        assert_eq!(
-            "((foo id) x)".to_string(),
-            format!(
-                "{}",
-                Expr::Apply(
-                    Box::new(Expr::Apply(
-                        Box::new(Expr::Ident("foo".to_string())),
-                        Box::new(Expr::Ident("id".to_string()))
-                    )),
-                    Box::new(Expr::Ident("x".to_string()))
-                )
-            )
-        );
-
-        assert_eq!(
-            "(foo \"Hello World!\")".to_string(),
-            format!(
-                "{}",
-                Expr::Apply(
-                    Box::new(Expr::Ident("foo".to_string())),
-                    Box::new(Expr::String("Hello World!".to_string()))
-                )
-            )
-        );
-    }
-}
