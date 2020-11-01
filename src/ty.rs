@@ -1,4 +1,5 @@
 use crate::ast::*;
+use crate::name_source::*;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::iter;
@@ -69,29 +70,6 @@ pub fn unify(
             "Could not unify {} and {}",
             t1, t2
         )))),
-    }
-}
-
-#[derive(Debug)]
-pub struct NameSource {
-    counter: i64,
-}
-
-impl NameSource {
-    pub fn new() -> Self {
-        NameSource { counter: 0 }
-    }
-
-    fn fresh(&mut self, name: &str) -> Ident {
-        let i = self.counter;
-        self.counter += 1;
-        format!("{}_{}", name, i)
-    }
-}
-
-impl Default for NameSource {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

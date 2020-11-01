@@ -1,6 +1,7 @@
 use crate::ast::{Ident, Statement, TableDefinition};
 use crate::environment::Environment;
 use crate::eval::eval;
+use crate::name_source::NameSource;
 use crate::object::Object;
 use crate::ty;
 use anyhow::{anyhow, Context, Result};
@@ -34,7 +35,7 @@ pub fn start(rx: Receiver<(Statement, Sender<Result<String>>)>) -> Result<()> {
                     // infer type of expr and try to unify with def.ty
                     let ty = ty::infer(
                         &mut HashMap::new(),
-                        &mut ty::NameSource::new(),
+                        &mut NameSource::new(),
                         &HashMap::new(),
                         &expr,
                     )
