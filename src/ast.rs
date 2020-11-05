@@ -120,6 +120,7 @@ pub enum Statement {
     Create(Ident, TableDefinition),
     Insert(Ident, Expr),
     Select(Ident),
+    Let(Ident, Expr),
 }
 
 impl fmt::Display for Statement {
@@ -128,6 +129,7 @@ impl fmt::Display for Statement {
             Statement::Create(ident, def) => write!(f, "create table {} {}", ident, def.ty),
             Statement::Insert(ident, expr) => write!(f, "insert {} into {}", expr, ident),
             Statement::Select(ident) => write!(f, "select from {}", ident),
+            Statement::Let(ident, expr) => write!(f, "let {} = {}", ident, expr),
         }
     }
 }

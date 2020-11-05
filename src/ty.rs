@@ -18,7 +18,7 @@ type Constraint = (Ty, Ty);
 type Scheme = (Vec<Ident>, Ty);
 
 /// Type Environment
-type Env = HashMap<Ident, Scheme>;
+pub type Env = HashMap<Ident, Scheme>;
 
 pub fn unify(
     mut constraints: impl Iterator<Item = Constraint>,
@@ -172,7 +172,7 @@ fn instantiate(scheme: &Scheme, name_src: &mut NameSource) -> Ty {
     res
 }
 
-fn generalize(env: &Env, ty: Ty) -> Scheme {
+pub fn generalize(env: &Env, ty: Ty) -> Scheme {
     let env_fvs: HashSet<_> = env.fv().collect();
     (
         ty.fv()

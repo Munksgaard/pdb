@@ -40,4 +40,9 @@ fn display_expr() {
             )
         )
     );
+
+    assert_eq!(
+        "let foo = 42".to_string(),
+        format!("{}", Statement::Let("foo".to_string(), Expr::Int(42)))
+    );
 }

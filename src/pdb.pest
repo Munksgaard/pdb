@@ -47,10 +47,12 @@ term = { letbind | unit | tuple | record | int | bool | string | lambda | identi
 
 expr = { term+ }
 
+letdecl = { "let" ~ identifier ~ "=" ~ expr }
+
 insert = { "insert" ~ expr ~ "into" ~ identifier }
 
 select = { "select" ~ "from" ~ identifier }
 
 create = { "create" ~ "table" ~ identifier ~ ty }
 
-statement = _{ SOI ~ (create | insert | select) ~ EOI }
+statement = _{ SOI ~ (create | insert | select | letdecl) ~ EOI }

@@ -103,10 +103,7 @@ fn parse_lambda(mut pairs: Pairs<Rule>) -> Result<Expr, Error<Rule>> {
 pub fn parse_term(term: Pair<Rule>) -> Result<Expr, Error<Rule>> {
     match term.as_rule() {
         Rule::int => Ok(Expr::Int(term.as_str().parse().unwrap())),
-        Rule::bool => Ok(Expr::Bool(match term.as_str() {
-            "True" => true,
-            _ => false,
-        })),
+        Rule::bool => Ok(Expr::Bool(matches!(term.as_str(), "True"))),
         Rule::tuple => Ok(Expr::Tuple(
             term.into_inner()
                 .map(|x| parse_exprs(x.into_inner()))
@@ -163,11 +160,19 @@ pub fn parse_create(mut pairs: Pairs<Rule>) -> Result<Statement, Error<Rule>> {
     Ok(Statement::Create(ident.to_string(), TableDefinition { ty }))
 }
 
+pub fn parse_letdecl(mut pairs: Pairs<Rule>) -> Result<Statement, Error<Rule>> {
+    let ident = pairs.next().unwrap().as_str();
+    let expr = parse_exprs(pairs.next().unwrap().into_inner())?;
+
+    Ok(Statement::Let(ident.to_string(), expr))
+}
+
 fn parse_statement(pair: Pair<Rule>) -> Result<Statement, Error<Rule>> {
     match pair.as_rule() {
         Rule::create => Ok(parse_create(pair.into_inner())?),
         Rule::select => Ok(parse_select(pair.into_inner())?),
         Rule::insert => Ok(parse_insert(pair.into_inner())?),
+        Rule::letdecl => Ok(parse_letdecl(pair.into_inner())?),
         _ => Err(Error::new_from_span(
             pest::error::ErrorVariant::CustomError {
                 message: format!("Unexpected rule {:?}, expected statement", pair),

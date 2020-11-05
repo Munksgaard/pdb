@@ -313,3 +313,11 @@ fn parse_select() {
         parse("select from x").unwrap()
     );
 }
+
+#[test]
+fn parse_letdecl() {
+    assert_eq!(
+        Statement::Let(String::from("x"), Expr::Int(42)),
+        parse("let x = 42").unwrap()
+    );
+}

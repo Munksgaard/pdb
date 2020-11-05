@@ -10,8 +10,17 @@ use std::sync::mpsc::{Receiver, Sender};
 
 type Tables = Vec<(Ident, TableDefinition, Vec<Object>)>;
 
+struct Env {
+    ty_env: ty::Env,
+    env: Environment,
+}
+
 pub fn start(rx: Receiver<(Statement, Sender<Result<String>>)>) -> Result<()> {
     let mut tables: Tables = Vec::new();
+    let mut env = Env {
+        ty_env: HashMap::new(),
+        env: Environment::new(),
+    };
 
     loop {
         let (stm, tx) = match rx.recv() {
@@ -36,13 +45,13 @@ pub fn start(rx: Receiver<(Statement, Sender<Result<String>>)>) -> Result<()> {
                     let ty = ty::infer(
                         &mut HashMap::new(),
                         &mut NameSource::new(),
-                        &HashMap::new(),
+                        &env.ty_env,
                         &expr,
                     )
                     .map_err(|e| anyhow!("{}", e))?;
 
                     if ty::unify(std::iter::once((ty.clone(), def.ty.clone()))).all(|x| x.is_ok()) {
-                        let result = eval(&Environment::new(), expr)?;
+                        let result = eval(&env.env, expr)?;
                         objs.push(result);
                         tx.send(Ok(String::from("Inserted 1\n")))
                             .context("Ack channel prematurely closed")?;
@@ -67,6 +76,26 @@ pub fn start(rx: Receiver<(Statement, Sender<Result<String>>)>) -> Result<()> {
                     tx.send(Err(anyhow!("No such table\n")))
                         .context("Ack channel prematurely closed")?;
                 }
+            }
+            Statement::Let(ident, expr) => {
+                // infer type of expr and try to unify with def.ty
+                let ty = ty::infer(
+                    &mut HashMap::new(),
+                    &mut NameSource::new(),
+                    &env.ty_env,
+                    &expr,
+                )
+                .map_err(|e| anyhow!("{}", e))?;
+
+                let scheme = ty::generalize(&env.ty_env, ty.clone());
+
+                env.ty_env.insert(ident.clone(), scheme);
+
+                let obj = eval(&env.env, expr)?;
+
+                env.env = env.env.insert(&ident, obj);
+
+                tx.send(Ok(format!("{}: {}\n", ident, ty)))?;
             }
         }
     }
