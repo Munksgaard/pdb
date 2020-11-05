@@ -23,7 +23,7 @@ int = @{
     ~ ("0" | ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*)
 }
 
-bool = { "true" | "false" }
+bool = { "True" | "False" }
 
 tuple = { "(" ~ expr ~ ("," ~ expr)+ ~ ","? ~ ")" }
 

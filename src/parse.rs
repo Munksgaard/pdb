@@ -103,7 +103,10 @@ fn parse_lambda(mut pairs: Pairs<Rule>) -> Result<Expr, Error<Rule>> {
 pub fn parse_term(term: Pair<Rule>) -> Result<Expr, Error<Rule>> {
     match term.as_rule() {
         Rule::int => Ok(Expr::Int(term.as_str().parse().unwrap())),
-        Rule::bool => Ok(Expr::Bool(term.as_str().parse().unwrap())),
+        Rule::bool => Ok(Expr::Bool(match term.as_str() {
+            "True" => true,
+            _ => false,
+        })),
         Rule::tuple => Ok(Expr::Tuple(
             term.into_inner()
                 .map(|x| parse_exprs(x.into_inner()))

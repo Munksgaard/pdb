@@ -322,12 +322,12 @@ fn infer_and_print() {
 
     assert_eq!(
         "((x_0_1 -> x_0_1), Int, Bool)",
-        infer("(let id = lambda x -> x in id end, 42, true)")
+        infer("(let id = lambda x -> x in id end, 42, True)")
     );
 
     assert_eq!(
         "{ x: (x_0_1 -> x_0_1), y: Int, z: Bool }",
-        infer("{ x = let id = lambda x -> x in id end, y = 42, z = true }")
+        infer("{ x = let id = lambda x -> x in id end, y = 42, z = True }")
     );
 
     assert_eq!("()", infer("()"));

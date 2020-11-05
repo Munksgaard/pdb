@@ -255,7 +255,7 @@ fn parse_insert_negative_0() {
 fn parse_insert_bool() {
     assert_eq!(
         Statement::Insert(String::from("x"), Expr::Bool(false)),
-        parse("insert false into x").unwrap()
+        parse("insert False into x").unwrap()
     );
 }
 
@@ -266,7 +266,7 @@ fn parse_insert_tuple() {
             String::from("x"),
             Expr::Tuple(vec!(Expr::Bool(false), Expr::Bool(true), Expr::Int(42)))
         ),
-        parse("insert (false, true, 42) into x").unwrap()
+        parse("insert (False, True, 42) into x").unwrap()
     );
 }
 
@@ -288,7 +288,7 @@ fn parse_insert_record() {
                 (String::from("y"), Expr::Int(42)),
             ))
         ),
-        parse("insert { y = 42, x = false, } into x").unwrap()
+        parse("insert { y = 42, x = False, } into x").unwrap()
     );
 }
 
