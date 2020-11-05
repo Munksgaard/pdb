@@ -333,6 +333,10 @@ fn infer_and_print() {
     assert_eq!("()", infer("()"));
 
     assert_eq!("String", infer("\"Hello World!\""));
+
+    assert_eq!("Int", infer("case 42 of i => i end"));
+
+    assert_eq!("Int", infer("case (42, True) of (i, j) => i end"));
 }
 
 #[test]
@@ -356,4 +360,6 @@ fn parse_and_infer() {
     }
 
     assert!(infer("lambda x -> x x").is_err());
+
+    assert!(infer("case 42 of (i, j) => i end").is_err());
 }

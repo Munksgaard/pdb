@@ -1,6 +1,7 @@
 use crate::ast::*;
 use crate::environment::Environment;
 use crate::object::Object;
+use anyhow::anyhow;
 use anyhow::Result;
 use std::rc::Rc;
 
@@ -55,5 +56,32 @@ pub fn eval(env: &Environment, expr: Expr) -> Result<Object> {
                 eval(&env.insert(&ident, obj), *e.clone())
             })))
         }
+        Expr::Case(expr, matches) => {
+            let obj = eval(env, *expr)?;
+
+            for (pat, e) in matches {
+                // See if obj matches obj, returning an updated environment
+                if let Some(env) = match_pat(env, &pat, &obj) {
+                    return eval(&env, e);
+                }
+            }
+
+            Err(anyhow!("No match found for case!"))
+        }
+    }
+}
+
+fn match_pat(env: &Environment, pat: &Pattern, obj: &Object) -> Option<Environment> {
+    match (pat, obj) {
+        (Pattern::Ident(ident), _) => Some(env.insert(&ident, obj.clone())),
+        (Pattern::Tuple(pats), Object::Tuple(objs)) => {
+            // I assume that they match, since we've already type checked
+            let mut env = env.clone();
+            for (pat, obj) in pats.iter().zip(objs.iter()) {
+                env = match_pat(&env, pat, &obj)?
+            }
+            Some(env)
+        }
+        _ => None,
     }
 }

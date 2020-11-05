@@ -79,18 +79,22 @@ pub fn start(rx: Receiver<(Statement, Sender<Result<String>>)>) -> Result<()> {
             }
             Statement::Let(ident, expr) => {
                 // infer type of expr and try to unify with def.ty
+                println!("got let");
                 let ty = ty::infer(
                     &mut HashMap::new(),
                     &mut NameSource::new(),
                     &env.ty_env,
                     &expr,
                 )
-                .map_err(|e| anyhow!("{}", e))?;
+                .map_err(|e| anyhow!("{}", e))
+                .unwrap();
 
+                println!("got scheme");
                 let scheme = ty::generalize(&env.ty_env, ty.clone());
 
                 env.ty_env.insert(ident.clone(), scheme);
 
+                println!("got obj");
                 let obj = eval(&env.env, expr)?;
 
                 env.env = env.env.insert(&ident, obj);

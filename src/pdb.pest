@@ -1,6 +1,6 @@
 WHITESPACE = _{ " " | "\n" }
 
-keyword = { "let" | "insert" | "select" | "from" | "into" | "create" | "end" | "lambda" | "in" }
+keyword = { "let" | "insert" | "select" | "from" | "into" | "create" | "end" | "lambda" | "in" | "case" | "of" }
 
 identifier = @{ !keyword ~ ('a'..'z' ~ ASCII_ALPHANUMERIC*) }
 
@@ -43,7 +43,13 @@ letbind = { ( "let" ~ identifier ~ "=" ~ expr )+ ~ "in" ~ expr ~ "end" }
 
 lambda = { "lambda" ~ identifier ~ "->" ~ expr }
 
-term = { letbind | unit | tuple | record | int | bool | string | lambda | identifier | "(" ~ expr ~ ")" }
+tuple_pat = { "(" ~ pattern ~ ("," ~ pattern)+ ~ ","? ~ ")" }
+
+pattern = { tuple_pat | identifier }
+
+case = { "case" ~ expr ~ "of" ~ "|"? ~ pattern ~ "=>" ~ expr ~ ( "|" ~ pattern ~ "=>" ~ expr)* ~ "end" }
+
+term = { letbind | unit | tuple | record | int | bool | string | lambda | case | identifier | "(" ~ expr ~ ")" }
 
 expr = { term+ }
 

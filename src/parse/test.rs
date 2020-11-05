@@ -321,3 +321,37 @@ fn parse_letdecl() {
         parse("let x = 42").unwrap()
     );
 }
+
+#[test]
+fn parse_case() {
+    assert_eq!(
+        Statement::Let(
+            String::from("x"),
+            Expr::Case(
+                Box::new(Expr::Int(42)),
+                vec!((
+                    Pattern::Ident("i".to_string()),
+                    Expr::Ident("i".to_string())
+                ))
+            )
+        ),
+        parse("let x = case 42 of i => i end").unwrap()
+    );
+
+    assert_eq!(
+        Statement::Let(
+            String::from("x"),
+            Expr::Case(
+                Box::new(Expr::Int(42)),
+                vec!((
+                    Pattern::Tuple(vec!(
+                        Pattern::Ident("i".to_string()),
+                        Pattern::Ident("j".to_string())
+                    )),
+                    Expr::Ident("j".to_string())
+                ))
+            )
+        ),
+        parse("let x = case 42 of (i, j) => j end").unwrap()
+    );
+}

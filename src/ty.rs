@@ -157,6 +157,69 @@ pub fn infer(
             Ok(Ty::Record(res))
         }
         Expr::Unit => Ok(Ty::Unit),
+        Expr::Case(expr, matches) => {
+            // Find the type of expr
+            let ty = infer(global_sub, name_src, env, expr)?;
+
+            // Bind the result to a fresh type variable
+            let fresh = name_src.fresh("case");
+            let result_ty = Ty::Var(fresh.clone());
+
+            for (pat, e) in matches {
+                // verify that pat unifies with ty
+                let pat_substs = unify(unify_pat(name_src, &ty, pat).into_iter())
+                    .collect::<Result<Vec<_>, String>>()?;
+
+                let mut env = env.clone();
+                for (ident, ty) in pat_substs {
+                    // Insert the result both in global_sub and in the local
+                    // environment? Is it necessary to add it to global_sub?
+                    global_sub.insert(ident.clone(), ty.clone());
+
+                    let scheme = generalize(&env, ty);
+
+                    env.insert(ident.to_string(), scheme);
+                }
+
+                // the type of e
+                let e_ty = infer(global_sub, name_src, &env, e)?;
+                // Verify e_ty unifies with result_ty and insert substs?
+                let e_substs = unify(iter::once((e_ty, result_ty.clone())))
+                    .collect::<Result<Vec<_>, String>>()?;
+                // Insert substs in global_sub?
+                for (ident, ty) in e_substs {
+                    global_sub.insert(ident, ty);
+                }
+            }
+
+            let res = global_sub.get(&fresh).cloned().unwrap_or(Ty::Var(fresh));
+
+            Ok(res)
+        }
+    }
+}
+
+fn unify_pat(name_src: &mut NameSource, ty: &Ty, pat: &Pattern) -> Vec<Constraint> {
+    match pat {
+        Pattern::Ident(ident) => vec![(ty.clone(), Ty::Var(ident.clone()))],
+        Pattern::Tuple(pats) => {
+            let mut constraints = Vec::new();
+            let mut freshvars = Vec::new();
+
+            // Det er den forkerte tilgang. unify_pat skal returnere en liste af
+            // constraints, som vi så kan kalde unify med
+
+            for pat in pats {
+                // make fresh variables and add that to the unify chain
+                let fresh = name_src.fresh("case");
+                let result_ty = Ty::Var(fresh);
+                freshvars.push(result_ty.clone());
+                constraints.append(&mut unify_pat(name_src, &result_ty, &pat));
+            }
+            constraints.push((ty.clone(), Ty::Tuple(freshvars)));
+
+            constraints
+        }
     }
 }
 

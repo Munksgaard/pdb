@@ -100,6 +100,43 @@ fn parse_lambda(mut pairs: Pairs<Rule>) -> Result<Expr, Error<Rule>> {
     Ok(Expr::Lambda(ident, Box::new(expr)))
 }
 
+fn parse_case(mut pairs: Pairs<Rule>) -> Result<Expr, Error<Rule>> {
+    let expr = parse_exprs(pairs.next().unwrap().into_inner())?;
+
+    let mut matches = Vec::new();
+
+    while let Some(pat) = pairs.next() {
+        let pat_expr = pairs.next().unwrap().into_inner();
+        matches.push((
+            parse_pat(pat.into_inner().next().unwrap())?,
+            parse_exprs(pat_expr)?,
+        ));
+    }
+
+    Ok(Expr::Case(Box::new(expr), matches))
+}
+
+fn parse_pat(pat: Pair<Rule>) -> Result<Pattern, Error<Rule>> {
+    match pat.as_rule() {
+        Rule::identifier => Ok(Pattern::Ident(pat.as_str().to_string())),
+        Rule::tuple_pat => {
+            let mut pats = Vec::new();
+
+            for pair in pat.into_inner().into_iter() {
+                pats.push(parse_pat(pair.into_inner().next().unwrap())?);
+            }
+
+            Ok(Pattern::Tuple(pats))
+        }
+        r => Err(Error::new_from_span(
+            pest::error::ErrorVariant::CustomError {
+                message: format!("Unexpected rule {:?}, expected pattern", r),
+            },
+            pat.as_span(),
+        )),
+    }
+}
+
 pub fn parse_term(term: Pair<Rule>) -> Result<Expr, Error<Rule>> {
     match term.as_rule() {
         Rule::int => Ok(Expr::Int(term.as_str().parse().unwrap())),
@@ -117,6 +154,7 @@ pub fn parse_term(term: Pair<Rule>) -> Result<Expr, Error<Rule>> {
         Rule::identifier => Ok(Expr::Ident(term.as_str().to_string())),
         Rule::letbind => parse_let(term.into_inner()),
         Rule::lambda => parse_lambda(term.into_inner()),
+        Rule::case => parse_case(term.into_inner()),
         Rule::expr => parse_exprs(term.into_inner()),
         r => Err(Error::new_from_span(
             pest::error::ErrorVariant::CustomError {

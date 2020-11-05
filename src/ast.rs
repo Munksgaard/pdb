@@ -59,6 +59,31 @@ pub struct TableDefinition {
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+pub enum Pattern {
+    Ident(Ident),
+    Tuple(Vec<Pattern>),
+}
+
+impl fmt::Display for Pattern {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Pattern::Ident(ident) => write!(f, "{}", ident),
+            Pattern::Tuple(pats) => {
+                write!(f, "(")?;
+                for (i, pat) in pats.iter().enumerate() {
+                    if i != 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}", pat)?;
+                }
+
+                write!(f, ")")
+            }
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub enum Expr {
     Int(i64),
     Bool(bool),
@@ -70,6 +95,7 @@ pub enum Expr {
     Let(Vec<(Ident, Expr)>, Box<Expr>),
     Apply(Box<Expr>, Box<Expr>),
     Lambda(Ident, Box<Expr>),
+    Case(Box<Expr>, Vec<(Pattern, Expr)>),
 }
 
 impl fmt::Display for Expr {
@@ -111,6 +137,13 @@ impl fmt::Display for Expr {
             }
             Expr::Apply(e1, e2) => write!(f, "({} {})", e1, e2), // TODO: Handle parenthesis
             Expr::Lambda(ident, expr) => write!(f, "lambda {} -> {}", ident, expr),
+            Expr::Case(expr, patexprs) => {
+                write!(f, "case {} of ", expr)?;
+                for (pat, expr) in patexprs.iter() {
+                    write!(f, "| {} => {} ", pat, expr)?;
+                }
+                write!(f, " end")
+            }
         }
     }
 }

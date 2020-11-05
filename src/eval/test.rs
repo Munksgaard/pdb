@@ -91,3 +91,14 @@ fn eval_first() {
         )
     );
 }
+
+#[test]
+fn eval_case() {
+    assert_eq!(
+        "42",
+        format!(
+            "{}",
+            parse_and_eval("case (42, 43) of (i, j) => i end").unwrap()
+        )
+    );
+}
