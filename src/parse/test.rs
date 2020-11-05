@@ -47,62 +47,66 @@ fn parse_exprs_helper(input: &str) -> Expr {
 
 #[test]
 fn parse_exprs() {
+    use crate::ast::Atom::*;
     use Expr::*;
 
-    assert_eq!(Int(4), parse_exprs_helper(&"4"));
-    assert_eq!(Ident("x".to_string()), parse_exprs_helper(&"x"));
+    assert_eq!(Atom(Int(4)), parse_exprs_helper(&"4"));
+    assert_eq!(Atom(Ident("x".to_string())), parse_exprs_helper(&"x"));
     assert_eq!(
         Apply(
-            Box::new(Ident("x".to_string())),
-            Box::new(Ident("y".to_string()))
+            Box::new(Atom(Ident("x".to_string()))),
+            Box::new(Atom(Ident("y".to_string())))
         ),
         parse_exprs_helper(&"x y")
     );
     assert_eq!(
         Apply(
             Box::new(Apply(
-                Box::new(Ident("x".to_string())),
-                Box::new(Ident("y".to_string()))
+                Box::new(Atom(Ident("x".to_string()))),
+                Box::new(Atom(Ident("y".to_string())))
             )),
-            Box::new(Ident("z".to_string()))
+            Box::new(Atom(Ident("z".to_string())))
         ),
         parse_exprs_helper(&"x y z")
     );
     assert_eq!(
         Apply(
             Box::new(Apply(
-                Box::new(Ident("x".to_string())),
-                Box::new(Ident("y".to_string()))
+                Box::new(Atom(Ident("x".to_string()))),
+                Box::new(Atom(Ident("y".to_string())))
             )),
-            Box::new(Ident("z".to_string()))
+            Box::new(Atom(Ident("z".to_string())))
         ),
         parse_exprs_helper(&"(x y) z")
     );
     assert_eq!(
         Apply(
-            Box::new(Ident("x".to_string())),
+            Box::new(Atom(Ident("x".to_string()))),
             Box::new(Apply(
-                Box::new(Ident("y".to_string())),
-                Box::new(Ident("z".to_string()))
+                Box::new(Atom(Ident("y".to_string()))),
+                Box::new(Atom(Ident("z".to_string())))
             ))
         ),
         parse_exprs_helper(&"x (y z)")
     );
     assert_eq!(
         Apply(
-            Box::new(Ident("x".to_string())),
-            Box::new(Tuple(vec!(Ident("y".to_string()), Ident("z".to_string()))))
+            Box::new(Atom(Ident("x".to_string()))),
+            Box::new(Tuple(vec!(
+                Atom(Ident("y".to_string())),
+                Atom(Ident("z".to_string()))
+            )))
         ),
         parse_exprs_helper(&"x (y, z)")
     );
     assert_eq!(
-        Lambda("f".to_string(), Box::new(Ident("x".to_string()))),
+        Lambda("f".to_string(), Box::new(Atom(Ident("x".to_string())))),
         parse_exprs_helper(&"lambda f -> x")
     );
     assert_eq!(
         Let(
-            vec!(("x".to_string(), Int(42))),
-            Box::new(Ident("x".to_string()))
+            vec!(("x".to_string(), Atom(Int(42)))),
+            Box::new(Atom(Ident("x".to_string())))
         ),
         parse_exprs_helper(&"let x = 42 in x end")
     );
@@ -123,11 +127,12 @@ fn parse_and_print_is_isomorph() {
 
 #[test]
 fn parse_insert() {
+    use crate::ast::Atom::*;
     use Expr::*;
     use Statement::*;
 
     assert_eq!(
-        Insert("x".to_string(), Int(4)),
+        Insert("x".to_string(), Atom(Int(4))),
         super::parse_insert(
             Parser::parse(Rule::insert, &"insert 4 into x")
                 .unwrap()
@@ -140,7 +145,10 @@ fn parse_insert() {
     assert_eq!(
         Insert(
             "x".to_string(),
-            Apply(Box::new(Ident("f".to_string())), Box::new(Int(4)))
+            Apply(
+                Box::new(Atom(Ident("f".to_string()))),
+                Box::new(Atom(Int(4)))
+            )
         ),
         super::parse_insert(
             Parser::parse(Rule::insert, &"insert f 4 into x")
@@ -222,7 +230,7 @@ fn parse_create_record() {
 #[test]
 fn parse_insert_int() {
     assert_eq!(
-        Statement::Insert(String::from("x"), Expr::Int(42)),
+        Statement::Insert(String::from("x"), Expr::Atom(Atom::Int(42))),
         parse("insert 42 into x").unwrap()
     )
 }
@@ -230,7 +238,7 @@ fn parse_insert_int() {
 #[test]
 fn parse_insert_negative_int() {
     assert_eq!(
-        Statement::Insert(String::from("x"), Expr::Int(-42)),
+        Statement::Insert(String::from("x"), Expr::Atom(Atom::Int(-42))),
         parse("insert -42 into x").unwrap()
     )
 }
@@ -238,7 +246,10 @@ fn parse_insert_negative_int() {
 #[test]
 fn parse_insert_0() {
     assert_eq!(
-        Ok(Statement::Insert(String::from("x"), Expr::Int(0))),
+        Ok(Statement::Insert(
+            String::from("x"),
+            Expr::Atom(Atom::Int(0))
+        )),
         parse("insert 0 into x")
     )
 }
@@ -246,7 +257,7 @@ fn parse_insert_0() {
 #[test]
 fn parse_insert_negative_0() {
     assert_eq!(
-        Statement::Insert(String::from("x"), Expr::Int(0)),
+        Statement::Insert(String::from("x"), Expr::Atom(Atom::Int(0))),
         parse("insert -0 into x").unwrap()
     )
 }
@@ -254,7 +265,7 @@ fn parse_insert_negative_0() {
 #[test]
 fn parse_insert_bool() {
     assert_eq!(
-        Statement::Insert(String::from("x"), Expr::Bool(false)),
+        Statement::Insert(String::from("x"), Expr::Atom(Atom::Bool(false))),
         parse("insert False into x").unwrap()
     );
 }
@@ -264,7 +275,11 @@ fn parse_insert_tuple() {
     assert_eq!(
         Statement::Insert(
             String::from("x"),
-            Expr::Tuple(vec!(Expr::Bool(false), Expr::Bool(true), Expr::Int(42)))
+            Expr::Tuple(vec!(
+                Expr::Atom(Atom::Bool(false)),
+                Expr::Atom(Atom::Bool(true)),
+                Expr::Atom(Atom::Int(42))
+            ))
         ),
         parse("insert (False, True, 42) into x").unwrap()
     );
@@ -273,7 +288,7 @@ fn parse_insert_tuple() {
 #[test]
 fn parse_insert_unit() {
     assert_eq!(
-        Statement::Insert(String::from("x"), Expr::Unit),
+        Statement::Insert(String::from("x"), Expr::Atom(Atom::Unit)),
         parse("insert () into x").unwrap()
     );
 }
@@ -284,8 +299,8 @@ fn parse_insert_record() {
         Statement::Insert(
             String::from("x"),
             Expr::Record(vec!(
-                (String::from("x"), Expr::Bool(false)),
-                (String::from("y"), Expr::Int(42)),
+                (String::from("x"), Expr::Atom(Atom::Bool(false))),
+                (String::from("y"), Expr::Atom(Atom::Int(42))),
             ))
         ),
         parse("insert { y = 42, x = False, } into x").unwrap()
@@ -298,8 +313,8 @@ fn parse_insert_record_2() {
         Statement::Insert(
             String::from("bar"),
             Expr::Record(vec!(
-                (String::from("x"), Expr::Int(0)),
-                (String::from("y"), Expr::Int(42)),
+                (String::from("x"), Expr::Atom(Atom::Int(0))),
+                (String::from("y"), Expr::Atom(Atom::Int(42))),
             ))
         ),
         parse("insert { y = 42, x = 0 } into bar").unwrap()
@@ -317,7 +332,7 @@ fn parse_select() {
 #[test]
 fn parse_letdecl() {
     assert_eq!(
-        Statement::Let(String::from("x"), Expr::Int(42)),
+        Statement::Let(String::from("x"), Expr::Atom(Atom::Int(42))),
         parse("let x = 42").unwrap()
     );
 }
@@ -328,10 +343,10 @@ fn parse_case() {
         Statement::Let(
             String::from("x"),
             Expr::Case(
-                Box::new(Expr::Int(42)),
+                Box::new(Expr::Atom(Atom::Int(42))),
                 vec!((
                     Pattern::Ident("i".to_string()),
-                    Expr::Ident("i".to_string())
+                    Expr::Atom(Atom::Ident("i".to_string()))
                 ))
             )
         ),
@@ -342,13 +357,13 @@ fn parse_case() {
         Statement::Let(
             String::from("x"),
             Expr::Case(
-                Box::new(Expr::Int(42)),
+                Box::new(Expr::Atom(Atom::Int(42))),
                 vec!((
                     Pattern::Tuple(vec!(
                         Pattern::Ident("i".to_string()),
                         Pattern::Ident("j".to_string())
                     )),
-                    Expr::Ident("j".to_string())
+                    Expr::Atom(Atom::Ident("j".to_string()))
                 ))
             )
         ),

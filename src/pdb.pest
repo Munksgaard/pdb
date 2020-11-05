@@ -49,7 +49,9 @@ pattern = { tuple_pat | identifier }
 
 case = { "case" ~ expr ~ "of" ~ "|"? ~ pattern ~ "=>" ~ expr ~ ( "|" ~ pattern ~ "=>" ~ expr)* ~ "end" }
 
-term = { letbind | unit | tuple | record | int | bool | string | lambda | case | identifier | "(" ~ expr ~ ")" }
+atom = { unit | bool | int | string | identifier }
+
+term = { atom | letbind | tuple | record | lambda | case | "(" ~ expr ~ ")" }
 
 expr = { term+ }
 

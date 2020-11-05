@@ -84,14 +84,31 @@ impl fmt::Display for Pattern {
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
-pub enum Expr {
-    Int(i64),
-    Bool(bool),
-    Tuple(Vec<Expr>),
+pub enum Atom {
     Unit,
+    Bool(bool),
+    Int(i64),
     String(String),
-    Record(Vec<(Ident, Expr)>),
     Ident(Ident),
+}
+
+impl fmt::Display for Atom {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Atom::Int(i) => write!(f, "{}", i),
+            Atom::Bool(b) => write!(f, "{}", b),
+            Atom::Unit => write!(f, "()"),
+            Atom::String(s) => write!(f, "{:?}", s),
+            Atom::Ident(ident) => write!(f, "{}", ident),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+pub enum Expr {
+    Atom(Atom),
+    Tuple(Vec<Expr>),
+    Record(Vec<(Ident, Expr)>),
     Let(Vec<(Ident, Expr)>, Box<Expr>),
     Apply(Box<Expr>, Box<Expr>),
     Lambda(Ident, Box<Expr>),
@@ -101,8 +118,7 @@ pub enum Expr {
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Expr::Int(i) => write!(f, "{}", i),
-            Expr::Bool(b) => write!(f, "{}", b),
+            Expr::Atom(atom) => atom.fmt(f),
             Expr::Tuple(exprs) => {
                 write!(f, "(")?;
                 for (i, expr) in exprs.iter().enumerate() {
@@ -114,9 +130,6 @@ impl fmt::Display for Expr {
 
                 write!(f, ")")
             }
-            Expr::Unit => write!(f, "()"),
-            Expr::String(s) => write!(f, "{:?}", s),
-            Expr::Ident(ident) => write!(f, "{}", ident),
             Expr::Record(recs) => {
                 write!(f, "{{ ")?;
                 for (i, (ident, expr)) in recs.iter().enumerate() {

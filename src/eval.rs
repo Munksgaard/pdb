@@ -8,21 +8,28 @@ use std::rc::Rc;
 #[cfg(test)]
 mod test;
 
-pub fn eval(env: &Environment, expr: Expr) -> Result<Object> {
-    match expr {
-        Expr::Int(i) => {
+pub fn eval_atom(env: &Environment, atom: Atom) -> Result<Object> {
+    match atom {
+        Atom::Int(i) => {
             let res = Object::Int(i);
             Ok(res)
         }
-        Expr::Bool(b) => Ok(Object::Bool(b)),
+        Atom::Bool(b) => Ok(Object::Bool(b)),
+        Atom::Unit => Ok(Object::Unit),
+        Atom::String(b) => Ok(Object::String(b)),
+        Atom::Ident(ident) => env.lookup(&ident).map(|x| x.clone()),
+    }
+}
+
+pub fn eval(env: &Environment, expr: Expr) -> Result<Object> {
+    match expr {
+        Expr::Atom(atom) => Ok(eval_atom(env, atom)?),
         Expr::Tuple(exprs) => Ok(Object::Tuple(
             exprs
                 .into_iter()
                 .map(|e| eval(env, e))
                 .collect::<Result<Vec<_>>>()?,
         )),
-        Expr::Unit => Ok(Object::Unit),
-        Expr::String(b) => Ok(Object::String(b)),
         Expr::Record(xs) => {
             let res = xs
                 .into_iter()
@@ -30,7 +37,6 @@ pub fn eval(env: &Environment, expr: Expr) -> Result<Object> {
                 .collect::<Result<Vec<_>>>()?;
             Ok(Object::Record(res))
         }
-        Expr::Ident(ident) => env.lookup(&ident).map(|x| x.clone()),
         Expr::Let(binds, e) => {
             let env_ = binds
                 .into_iter()

@@ -4,7 +4,10 @@ use super::*;
 fn eval_int() {
     assert_eq!(
         "42",
-        format!("{}", eval(&Environment::new(), Expr::Int(42)).unwrap())
+        format!(
+            "{}",
+            eval(&Environment::new(), Expr::Atom(Atom::Int(42))).unwrap()
+        )
     );
 }
 
@@ -12,7 +15,10 @@ fn eval_int() {
 fn eval_bool() {
     assert_eq!(
         "true",
-        format!("{}", eval(&Environment::new(), Expr::Bool(true)).unwrap())
+        format!(
+            "{}",
+            eval(&Environment::new(), Expr::Atom(Atom::Bool(true))).unwrap()
+        )
     );
 }
 
@@ -24,7 +30,10 @@ fn eval_tuple() {
             "{}",
             eval(
                 &Environment::new(),
-                Expr::Tuple(vec!(Expr::Bool(false), Expr::Int(43)))
+                Expr::Tuple(vec!(
+                    Expr::Atom(Atom::Bool(false)),
+                    Expr::Atom(Atom::Int(43))
+                ))
             )
             .unwrap()
         ),
@@ -35,7 +44,10 @@ fn eval_tuple() {
 fn eval_unit() {
     assert_eq!(
         "()",
-        format!("{}", eval(&Environment::new(), Expr::Unit).unwrap())
+        format!(
+            "{}",
+            eval(&Environment::new(), Expr::Atom(Atom::Unit)).unwrap()
+        )
     );
 }
 
@@ -48,8 +60,8 @@ fn eval_record() {
             eval(
                 &Environment::new(),
                 Expr::Record(vec!(
-                    (String::from("x"), Expr::Bool(false)),
-                    (String::from("y"), Expr::Int(42))
+                    (String::from("x"), Expr::Atom(Atom::Bool(false))),
+                    (String::from("y"), Expr::Atom(Atom::Int(42)))
                 ))
             )
             .unwrap()

@@ -196,7 +196,10 @@ fn infer() {
             &mut HashMap::new(),
             &mut NameSource::new(),
             &mut HashMap::new(),
-            &Expr::Lambda("a".to_string(), Box::new(Expr::Ident("a".to_string())))
+            &Expr::Lambda(
+                "a".to_string(),
+                Box::new(Expr::Atom(Atom::Ident("a".to_string())))
+            )
         )
     );
 
@@ -207,8 +210,8 @@ fn infer() {
             &mut NameSource::new(),
             &mut HashMap::new(),
             &Expr::Let(
-                vec!(("x".to_string(), Expr::Int(42))),
-                Box::new(Expr::Ident("x".to_string()))
+                vec!(("x".to_string(), Expr::Atom(Atom::Int(42)))),
+                Box::new(Expr::Atom(Atom::Ident("x".to_string())))
             )
         )
     );
@@ -221,10 +224,10 @@ fn infer() {
             &mut HashMap::new(),
             &Expr::Let(
                 vec!(
-                    ("x".to_string(), Expr::Int(42)),
-                    ("y".to_string(), Expr::Bool(true))
+                    ("x".to_string(), Expr::Atom(Atom::Int(42))),
+                    ("y".to_string(), Expr::Atom(Atom::Bool(true)))
                 ),
-                Box::new(Expr::Ident("y".to_string()))
+                Box::new(Expr::Atom(Atom::Ident("y".to_string())))
             )
         )
     );
@@ -242,9 +245,12 @@ fn infer() {
             &Expr::Let(
                 vec!((
                     "id".to_string(),
-                    Expr::Lambda("y".to_string(), Box::new(Expr::Ident("y".to_string())))
+                    Expr::Lambda(
+                        "y".to_string(),
+                        Box::new(Expr::Atom(Atom::Ident("y".to_string())))
+                    )
                 )),
-                Box::new(Expr::Ident("id".to_string()))
+                Box::new(Expr::Atom(Atom::Ident("id".to_string())))
             )
         )
     );
@@ -266,20 +272,23 @@ fn infer() {
                         Box::new(Expr::Lambda(
                             "x".to_string(),
                             Box::new(Expr::Apply(
-                                Box::new(Expr::Ident("f".to_string())),
-                                Box::new(Expr::Ident("x".to_string())),
+                                Box::new(Expr::Atom(Atom::Ident("f".to_string()))),
+                                Box::new(Expr::Atom(Atom::Ident("x".to_string()))),
                             )),
                         )),
                     ),
                 ),
                 (
                     "id".to_string(),
-                    Expr::Lambda("y".to_string(), Box::new(Expr::Ident("y".to_string()))),
+                    Expr::Lambda(
+                        "y".to_string(),
+                        Box::new(Expr::Atom(Atom::Ident("y".to_string()))),
+                    ),
                 ),
             ],
             Box::new(Expr::Apply(
-                Box::new(Expr::Ident("apply".to_string())),
-                Box::new(Expr::Ident("id".to_string())),
+                Box::new(Expr::Atom(Atom::Ident("apply".to_string()))),
+                Box::new(Expr::Atom(Atom::Ident("id".to_string()))),
             )),
         ),
     );

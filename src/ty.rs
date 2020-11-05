@@ -86,10 +86,10 @@ pub fn infer(
     expr: &Expr,
 ) -> Result<Ty, String> {
     match expr {
-        Expr::Int(_) => Ok(Ty::Int),
-        Expr::Bool(_) => Ok(Ty::Bool),
-        Expr::String(_) => Ok(Ty::String),
-        Expr::Ident(ident) => {
+        Expr::Atom(Atom::Int(_)) => Ok(Ty::Int),
+        Expr::Atom(Atom::Bool(_)) => Ok(Ty::Bool),
+        Expr::Atom(Atom::String(_)) => Ok(Ty::String),
+        Expr::Atom(Atom::Ident(ident)) => {
             let scheme = env
                 .get(ident)
                 .ok_or_else(|| format!("Identifier {} not found in environment", ident))?;
@@ -156,7 +156,7 @@ pub fn infer(
 
             Ok(Ty::Record(res))
         }
-        Expr::Unit => Ok(Ty::Unit),
+        Expr::Atom(Atom::Unit) => Ok(Ty::Unit),
         Expr::Case(expr, matches) => {
             // Find the type of expr
             let ty = infer(global_sub, name_src, env, expr)?;

@@ -137,21 +137,33 @@ fn parse_pat(pat: Pair<Rule>) -> Result<Pattern, Error<Rule>> {
     }
 }
 
+pub fn parse_atom(term: Pair<Rule>) -> Result<Atom, Error<Rule>> {
+    match term.as_rule() {
+        Rule::int => Ok(Atom::Int(term.as_str().parse().unwrap())),
+        Rule::bool => Ok(Atom::Bool(matches!(term.as_str(), "True"))),
+        Rule::unit => Ok(Atom::Unit),
+        Rule::string => Ok(Atom::String(
+            term.into_inner().next().unwrap().as_str().to_string(),
+        )),
+        Rule::identifier => Ok(Atom::Ident(term.as_str().to_string())),
+        r => Err(Error::new_from_span(
+            pest::error::ErrorVariant::CustomError {
+                message: format!("Unexpected rule {:?}, expected atom", r),
+            },
+            term.as_span(),
+        )),
+    }
+}
+
 pub fn parse_term(term: Pair<Rule>) -> Result<Expr, Error<Rule>> {
     match term.as_rule() {
-        Rule::int => Ok(Expr::Int(term.as_str().parse().unwrap())),
-        Rule::bool => Ok(Expr::Bool(matches!(term.as_str(), "True"))),
+        Rule::atom => Ok(Expr::Atom(parse_atom(term.into_inner().next().unwrap())?)),
         Rule::tuple => Ok(Expr::Tuple(
             term.into_inner()
                 .map(|x| parse_exprs(x.into_inner()))
                 .collect::<Result<Vec<_>, _>>()?,
         )),
-        Rule::unit => Ok(Expr::Unit),
-        Rule::string => Ok(Expr::String(
-            term.into_inner().next().unwrap().as_str().to_string(),
-        )),
         Rule::record => parse_record(term.into_inner()),
-        Rule::identifier => Ok(Expr::Ident(term.as_str().to_string())),
         Rule::letbind => parse_let(term.into_inner()),
         Rule::lambda => parse_lambda(term.into_inner()),
         Rule::case => parse_case(term.into_inner()),
