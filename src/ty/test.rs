@@ -346,6 +346,8 @@ fn infer_and_print() {
     assert_eq!("Int", infer("case 42 of i => i end"));
 
     assert_eq!("Int", infer("case (42, True) of (i, j) => i end"));
+
+    assert_eq!("Int", infer("case (42, True) of (i, _) => i end"));
 }
 
 #[test]
@@ -371,4 +373,8 @@ fn parse_and_infer() {
     assert!(infer("lambda x -> x x").is_err());
 
     assert!(infer("case 42 of (i, j) => i end").is_err());
+
+    assert!(infer("case 0 of True => True | \"string\" => \"foo\" end").is_err(),);
+
+    assert!(infer("case (1337, 42) of (0, False) => True | (1337, i) => i end").is_err());
 }

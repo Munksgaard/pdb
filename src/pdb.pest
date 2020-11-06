@@ -45,7 +45,9 @@ lambda = { "lambda" ~ identifier ~ "->" ~ expr }
 
 tuple_pat = { "(" ~ pattern ~ ("," ~ pattern)+ ~ ","? ~ ")" }
 
-pattern = { tuple_pat | identifier }
+wildcard = { "_" }
+
+pattern = { wildcard | atom | tuple_pat | identifier }
 
 case = { "case" ~ expr ~ "of" ~ "|"? ~ pattern ~ "=>" ~ expr ~ ( "|" ~ pattern ~ "=>" ~ expr)* ~ "end" }
 

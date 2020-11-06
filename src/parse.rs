@@ -118,7 +118,7 @@ fn parse_case(mut pairs: Pairs<Rule>) -> Result<Expr, Error<Rule>> {
 
 fn parse_pat(pat: Pair<Rule>) -> Result<Pattern, Error<Rule>> {
     match pat.as_rule() {
-        Rule::identifier => Ok(Pattern::Ident(pat.as_str().to_string())),
+        Rule::atom => Ok(Pattern::Atom(parse_atom(pat.into_inner().next().unwrap())?)),
         Rule::tuple_pat => {
             let mut pats = Vec::new();
 
@@ -128,6 +128,7 @@ fn parse_pat(pat: Pair<Rule>) -> Result<Pattern, Error<Rule>> {
 
             Ok(Pattern::Tuple(pats))
         }
+        Rule::wildcard => Ok(Pattern::Wildcard),
         r => Err(Error::new_from_span(
             pest::error::ErrorVariant::CustomError {
                 message: format!("Unexpected rule {:?}, expected pattern", r),
@@ -137,20 +138,20 @@ fn parse_pat(pat: Pair<Rule>) -> Result<Pattern, Error<Rule>> {
     }
 }
 
-pub fn parse_atom(term: Pair<Rule>) -> Result<Atom, Error<Rule>> {
-    match term.as_rule() {
-        Rule::int => Ok(Atom::Int(term.as_str().parse().unwrap())),
-        Rule::bool => Ok(Atom::Bool(matches!(term.as_str(), "True"))),
+pub fn parse_atom(atom: Pair<Rule>) -> Result<Atom, Error<Rule>> {
+    match atom.as_rule() {
+        Rule::int => Ok(Atom::Int(atom.as_str().parse().unwrap())),
+        Rule::bool => Ok(Atom::Bool(matches!(atom.as_str(), "True"))),
         Rule::unit => Ok(Atom::Unit),
         Rule::string => Ok(Atom::String(
-            term.into_inner().next().unwrap().as_str().to_string(),
+            atom.into_inner().next().unwrap().as_str().to_string(),
         )),
-        Rule::identifier => Ok(Atom::Ident(term.as_str().to_string())),
+        Rule::identifier => Ok(Atom::Ident(atom.as_str().to_string())),
         r => Err(Error::new_from_span(
             pest::error::ErrorVariant::CustomError {
                 message: format!("Unexpected rule {:?}, expected atom", r),
             },
-            term.as_span(),
+            atom.as_span(),
         )),
     }
 }

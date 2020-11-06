@@ -345,7 +345,7 @@ fn parse_case() {
             Expr::Case(
                 Box::new(Expr::Atom(Atom::Int(42))),
                 vec!((
-                    Pattern::Ident("i".to_string()),
+                    Pattern::Atom(Atom::Ident("i".to_string())),
                     Expr::Atom(Atom::Ident("i".to_string()))
                 ))
             )
@@ -360,13 +360,24 @@ fn parse_case() {
                 Box::new(Expr::Atom(Atom::Int(42))),
                 vec!((
                     Pattern::Tuple(vec!(
-                        Pattern::Ident("i".to_string()),
-                        Pattern::Ident("j".to_string())
+                        Pattern::Atom(Atom::Ident("i".to_string())),
+                        Pattern::Atom(Atom::Ident("j".to_string()))
                     )),
                     Expr::Atom(Atom::Ident("j".to_string()))
                 ))
             )
         ),
         parse("let x = case 42 of (i, j) => j end").unwrap()
+    );
+
+    assert_eq!(
+        Statement::Let(
+            String::from("x"),
+            Expr::Case(
+                Box::new(Expr::Atom(Atom::Int(42))),
+                vec!((Pattern::Wildcard, Expr::Atom(Atom::Ident("j".to_string()))))
+            )
+        ),
+        parse("let x = case 42 of _ => j end").unwrap()
     );
 }

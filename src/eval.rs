@@ -8,22 +8,22 @@ use std::rc::Rc;
 #[cfg(test)]
 mod test;
 
-pub fn eval_atom(env: &Environment, atom: Atom) -> Result<Object> {
+pub fn eval_atom(env: &Environment, atom: &Atom) -> Result<Object> {
     match atom {
         Atom::Int(i) => {
-            let res = Object::Int(i);
+            let res = Object::Int(*i);
             Ok(res)
         }
-        Atom::Bool(b) => Ok(Object::Bool(b)),
+        Atom::Bool(b) => Ok(Object::Bool(*b)),
         Atom::Unit => Ok(Object::Unit),
-        Atom::String(b) => Ok(Object::String(b)),
+        Atom::String(s) => Ok(Object::String(s.clone())),
         Atom::Ident(ident) => env.lookup(&ident).map(|x| x.clone()),
     }
 }
 
 pub fn eval(env: &Environment, expr: Expr) -> Result<Object> {
     match expr {
-        Expr::Atom(atom) => Ok(eval_atom(env, atom)?),
+        Expr::Atom(atom) => Ok(eval_atom(env, &atom)?),
         Expr::Tuple(exprs) => Ok(Object::Tuple(
             exprs
                 .into_iter()
@@ -31,10 +31,11 @@ pub fn eval(env: &Environment, expr: Expr) -> Result<Object> {
                 .collect::<Result<Vec<_>>>()?,
         )),
         Expr::Record(xs) => {
-            let res = xs
+            let mut res = xs
                 .into_iter()
                 .map(|(ident, obj)| Ok((ident, eval(env, obj)?)))
                 .collect::<Result<Vec<_>>>()?;
+            res.sort_by_key(|(x, _)| x.clone());
             Ok(Object::Record(res))
         }
         Expr::Let(binds, e) => {
@@ -79,7 +80,14 @@ pub fn eval(env: &Environment, expr: Expr) -> Result<Object> {
 
 fn match_pat(env: &Environment, pat: &Pattern, obj: &Object) -> Option<Environment> {
     match (pat, obj) {
-        (Pattern::Ident(ident), _) => Some(env.insert(&ident, obj.clone())),
+        (Pattern::Atom(Atom::Ident(ident)), _) => Some(env.insert(&ident, obj.clone())),
+        (Pattern::Atom(atom), _) => {
+            if &eval_atom(&env, atom).ok()? == obj {
+                Some(env.clone())
+            } else {
+                None
+            }
+        }
         (Pattern::Tuple(pats), Object::Tuple(objs)) => {
             // I assume that they match, since we've already type checked
             let mut env = env.clone();
@@ -88,6 +96,7 @@ fn match_pat(env: &Environment, pat: &Pattern, obj: &Object) -> Option<Environme
             }
             Some(env)
         }
+        (Pattern::Wildcard, _) => Some(env.clone()),
         _ => None,
     }
 }

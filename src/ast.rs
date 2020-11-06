@@ -60,14 +60,15 @@ pub struct TableDefinition {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub enum Pattern {
-    Ident(Ident),
+    Atom(Atom),
     Tuple(Vec<Pattern>),
+    Wildcard,
 }
 
 impl fmt::Display for Pattern {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Pattern::Ident(ident) => write!(f, "{}", ident),
+            Pattern::Atom(atom) => atom.fmt(f),
             Pattern::Tuple(pats) => {
                 write!(f, "(")?;
                 for (i, pat) in pats.iter().enumerate() {
@@ -79,6 +80,7 @@ impl fmt::Display for Pattern {
 
                 write!(f, ")")
             }
+            Pattern::Wildcard => write!(f, "_"),
         }
     }
 }

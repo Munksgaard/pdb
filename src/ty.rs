@@ -201,13 +201,14 @@ pub fn infer(
 
 fn unify_pat(name_src: &mut NameSource, ty: &Ty, pat: &Pattern) -> Vec<Constraint> {
     match pat {
-        Pattern::Ident(ident) => vec![(ty.clone(), Ty::Var(ident.clone()))],
+        Pattern::Atom(Atom::Unit) => vec![(ty.clone(), Ty::Unit)],
+        Pattern::Atom(Atom::Bool(_)) => vec![(ty.clone(), Ty::Bool)],
+        Pattern::Atom(Atom::Int(_)) => vec![(ty.clone(), Ty::Int)],
+        Pattern::Atom(Atom::String(_)) => vec![(ty.clone(), Ty::String)],
+        Pattern::Atom(Atom::Ident(ident)) => vec![(ty.clone(), Ty::Var(ident.clone()))],
         Pattern::Tuple(pats) => {
             let mut constraints = Vec::new();
             let mut freshvars = Vec::new();
-
-            // Det er den forkerte tilgang. unify_pat skal returnere en liste af
-            // constraints, som vi så kan kalde unify med
 
             for pat in pats {
                 // make fresh variables and add that to the unify chain
@@ -220,6 +221,7 @@ fn unify_pat(name_src: &mut NameSource, ty: &Ty, pat: &Pattern) -> Vec<Constrain
 
             constraints
         }
+        Pattern::Wildcard => vec![],
     }
 }
 

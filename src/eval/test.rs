@@ -1,4 +1,5 @@
 use super::*;
+use anyhow::ensure;
 
 #[test]
 fn eval_int() {
@@ -111,6 +112,21 @@ fn eval_case() {
         format!(
             "{}",
             parse_and_eval("case (42, 43) of (i, j) => i end").unwrap()
+        )
+    );
+
+    assert_eq!(
+        "42",
+        format!(
+            "{}",
+            parse_and_eval("case 1337 of 0 => 0 | 1337 => 42 end").unwrap()
+        )
+    );
+    assert_eq!(
+        "42",
+        format!(
+            "{}",
+            parse_and_eval("case (1337, 0) of (1337, _) => 42 | _ => 43 end").unwrap()
         )
     );
 }
