@@ -221,6 +221,21 @@ fn unify_pat(name_src: &mut NameSource, ty: &Ty, pat: &Pattern) -> Vec<Constrain
 
             constraints
         }
+        Pattern::Record(recs) => {
+            let mut constraints = Vec::new();
+            let mut freshvars = Vec::new();
+
+            for (ident, pat) in recs {
+                // make fresh variables and add that to the unify chain
+                let fresh = name_src.fresh("case");
+                let result_ty = Ty::Var(fresh);
+                freshvars.push((ident.clone(), result_ty.clone()));
+                constraints.append(&mut unify_pat(name_src, &result_ty, &pat));
+            }
+            constraints.push((ty.clone(), Ty::Record(freshvars)));
+
+            constraints
+        }
         Pattern::Wildcard => vec![],
     }
 }

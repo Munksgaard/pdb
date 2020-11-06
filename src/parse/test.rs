@@ -380,4 +380,24 @@ fn parse_case() {
         ),
         parse("let x = case 42 of _ => j end").unwrap()
     );
+
+    assert_eq!(
+        Statement::Let(
+            String::from("x"),
+            Expr::Case(
+                Box::new(Expr::Atom(Atom::Int(42))),
+                vec!((
+                    Pattern::Record(vec!(
+                        (String::from("i"), Pattern::Wildcard),
+                        (
+                            String::from("j"),
+                            Pattern::Atom(Atom::Ident("j".to_string()))
+                        )
+                    )),
+                    Expr::Atom(Atom::Ident("j".to_string()))
+                ))
+            )
+        ),
+        parse("let x = case 42 of { i = _, j = j } => j end").unwrap()
+    );
 }

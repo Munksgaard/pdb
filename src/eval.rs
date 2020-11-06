@@ -96,6 +96,14 @@ fn match_pat(env: &Environment, pat: &Pattern, obj: &Object) -> Option<Environme
             }
             Some(env)
         }
+        (Pattern::Record(recs), Object::Record(obj_recs)) => {
+            // I assume that they match, since we've already type checked
+            let mut env = env.clone();
+            for ((_, pat), (_, obj)) in recs.iter().zip(obj_recs.iter()) {
+                env = match_pat(&env, pat, &obj)?
+            }
+            Some(env)
+        }
         (Pattern::Wildcard, _) => Some(env.clone()),
         _ => None,
     }

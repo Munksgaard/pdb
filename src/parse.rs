@@ -128,6 +128,19 @@ fn parse_pat(pat: Pair<Rule>) -> Result<Pattern, Error<Rule>> {
 
             Ok(Pattern::Tuple(pats))
         }
+        Rule::record_pat => {
+            let mut xs = Vec::new();
+            let mut pairs = pat.into_inner();
+
+            while let Some(ident) = pairs.next() {
+                let ty = parse_pat(pairs.next().unwrap().into_inner().next().unwrap())?;
+                xs.push((ident.as_str().to_owned(), ty));
+            }
+
+            xs.sort_by(|(x, _), (y, _)| x.cmp(y));
+
+            Ok(Pattern::Record(xs))
+        }
         Rule::wildcard => Ok(Pattern::Wildcard),
         r => Err(Error::new_from_span(
             pest::error::ErrorVariant::CustomError {

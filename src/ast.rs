@@ -62,6 +62,7 @@ pub struct TableDefinition {
 pub enum Pattern {
     Atom(Atom),
     Tuple(Vec<Pattern>),
+    Record(Vec<(Ident, Pattern)>),
     Wildcard,
 }
 
@@ -79,6 +80,17 @@ impl fmt::Display for Pattern {
                 }
 
                 write!(f, ")")
+            }
+            Pattern::Record(recs) => {
+                write!(f, "{{ ")?;
+                for (i, (ident, pat)) in recs.iter().enumerate() {
+                    if i != 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{} = {}", ident, pat)?;
+                }
+
+                write!(f, " }}")
             }
             Pattern::Wildcard => write!(f, "_"),
         }
@@ -138,7 +150,7 @@ impl fmt::Display for Expr {
                     if i != 0 {
                         write!(f, ", ")?;
                     }
-                    write!(f, "{}: {}", ident, expr)?;
+                    write!(f, "{} = {}", ident, expr)?;
                 }
 
                 write!(f, " }}")

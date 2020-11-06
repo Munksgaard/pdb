@@ -348,6 +348,11 @@ fn infer_and_print() {
     assert_eq!("Int", infer("case (42, True) of (i, j) => i end"));
 
     assert_eq!("Int", infer("case (42, True) of (i, _) => i end"));
+
+    assert_eq!(
+        "Int",
+        infer("case { x = 42, y = True } of { x = i, y = _ } => i end")
+    );
 }
 
 #[test]
