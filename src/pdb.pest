@@ -53,9 +53,9 @@ pattern = { wildcard | atom | record_pat | tuple_pat | identifier }
 
 case = { "case" ~ expr ~ "of" ~ "|"? ~ pattern ~ "=>" ~ expr ~ ( "|" ~ pattern ~ "=>" ~ expr)* ~ "end" }
 
-atom = { unit | bool | int | string | identifier }
+atom = { unit | bool | int | string }
 
-term = { atom | letbind | tuple | record | lambda | case | "(" ~ expr ~ ")" }
+term = { atom | identifier | tyident | letbind | tuple | record | lambda | case | "(" ~ expr ~ ")" }
 
 expr = { term+ }
 

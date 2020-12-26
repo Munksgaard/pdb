@@ -7,10 +7,10 @@ fn display_expr() {
         format!(
             "{}",
             Expr::Apply(
-                Box::new(Expr::Atom(Atom::Ident("foo".to_string()))),
+                Box::new(Expr::Ident("foo".to_string())),
                 Box::new(Expr::Apply(
-                    Box::new(Expr::Atom(Atom::Ident("id".to_string()))),
-                    Box::new(Expr::Atom(Atom::Ident("x".to_string())))
+                    Box::new(Expr::Ident("id".to_string())),
+                    Box::new(Expr::Ident("x".to_string()))
                 ))
             )
         )
@@ -22,10 +22,10 @@ fn display_expr() {
             "{}",
             Expr::Apply(
                 Box::new(Expr::Apply(
-                    Box::new(Expr::Atom(Atom::Ident("foo".to_string()))),
-                    Box::new(Expr::Atom(Atom::Ident("id".to_string())))
+                    Box::new(Expr::Ident("foo".to_string())),
+                    Box::new(Expr::Ident("id".to_string()))
                 )),
-                Box::new(Expr::Atom(Atom::Ident("x".to_string())))
+                Box::new(Expr::Ident("x".to_string()))
             )
         )
     );
@@ -35,7 +35,7 @@ fn display_expr() {
         format!(
             "{}",
             Expr::Apply(
-                Box::new(Expr::Atom(Atom::Ident("foo".to_string()))),
+                Box::new(Expr::Ident("foo".to_string())),
                 Box::new(Expr::Atom(Atom::String("Hello World!".to_string())))
             )
         )

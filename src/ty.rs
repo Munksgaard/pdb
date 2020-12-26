@@ -89,7 +89,7 @@ pub fn infer(
         Expr::Atom(Atom::Int(_)) => Ok(Ty::Int),
         Expr::Atom(Atom::Bool(_)) => Ok(Ty::Bool),
         Expr::Atom(Atom::String(_)) => Ok(Ty::String),
-        Expr::Atom(Atom::Ident(ident)) => {
+        Expr::Ident(ident) => {
             let scheme = env
                 .get(ident)
                 .ok_or_else(|| format!("Identifier {} not found in environment", ident))?;
@@ -205,7 +205,7 @@ fn unify_pat(name_src: &mut NameSource, ty: &Ty, pat: &Pattern) -> Vec<Constrain
         Pattern::Atom(Atom::Bool(_)) => vec![(ty.clone(), Ty::Bool)],
         Pattern::Atom(Atom::Int(_)) => vec![(ty.clone(), Ty::Int)],
         Pattern::Atom(Atom::String(_)) => vec![(ty.clone(), Ty::String)],
-        Pattern::Atom(Atom::Ident(ident)) => vec![(ty.clone(), Ty::Var(ident.clone()))],
+        Pattern::Ident(ident) => vec![(ty.clone(), Ty::Var(ident.clone()))],
         Pattern::Tuple(pats) => {
             let mut constraints = Vec::new();
             let mut freshvars = Vec::new();

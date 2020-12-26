@@ -142,6 +142,7 @@ fn parse_pat(pat: Pair<Rule>) -> Result<Pattern, Error<Rule>> {
             Ok(Pattern::Record(xs))
         }
         Rule::wildcard => Ok(Pattern::Wildcard),
+        Rule::identifier => Ok(Pattern::Ident(pat.as_str().to_string())),
         r => Err(Error::new_from_span(
             pest::error::ErrorVariant::CustomError {
                 message: format!("Unexpected rule {:?}, expected pattern", r),
@@ -159,7 +160,6 @@ pub fn parse_atom(atom: Pair<Rule>) -> Result<Atom, Error<Rule>> {
         Rule::string => Ok(Atom::String(
             atom.into_inner().next().unwrap().as_str().to_string(),
         )),
-        Rule::identifier => Ok(Atom::Ident(atom.as_str().to_string())),
         r => Err(Error::new_from_span(
             pest::error::ErrorVariant::CustomError {
                 message: format!("Unexpected rule {:?}, expected atom", r),
@@ -172,6 +172,7 @@ pub fn parse_atom(atom: Pair<Rule>) -> Result<Atom, Error<Rule>> {
 pub fn parse_term(term: Pair<Rule>) -> Result<Expr, Error<Rule>> {
     match term.as_rule() {
         Rule::atom => Ok(Expr::Atom(parse_atom(term.into_inner().next().unwrap())?)),
+        Rule::identifier => Ok(Expr::Ident(term.as_str().to_string())),
         Rule::tuple => Ok(Expr::Tuple(
             term.into_inner()
                 .map(|x| parse_exprs(x.into_inner()))

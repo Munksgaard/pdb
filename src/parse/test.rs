@@ -51,62 +51,59 @@ fn parse_exprs() {
     use Expr::*;
 
     assert_eq!(Atom(Int(4)), parse_exprs_helper(&"4"));
-    assert_eq!(Atom(Ident("x".to_string())), parse_exprs_helper(&"x"));
+    assert_eq!(Ident("x".to_string()), parse_exprs_helper(&"x"));
     assert_eq!(
         Apply(
-            Box::new(Atom(Ident("x".to_string()))),
-            Box::new(Atom(Ident("y".to_string())))
+            Box::new(Ident("x".to_string())),
+            Box::new(Ident("y".to_string()))
         ),
         parse_exprs_helper(&"x y")
     );
     assert_eq!(
         Apply(
             Box::new(Apply(
-                Box::new(Atom(Ident("x".to_string()))),
-                Box::new(Atom(Ident("y".to_string())))
+                Box::new(Ident("x".to_string())),
+                Box::new(Ident("y".to_string()))
             )),
-            Box::new(Atom(Ident("z".to_string())))
+            Box::new(Ident("z".to_string()))
         ),
         parse_exprs_helper(&"x y z")
     );
     assert_eq!(
         Apply(
             Box::new(Apply(
-                Box::new(Atom(Ident("x".to_string()))),
-                Box::new(Atom(Ident("y".to_string())))
+                Box::new(Ident("x".to_string())),
+                Box::new(Ident("y".to_string()))
             )),
-            Box::new(Atom(Ident("z".to_string())))
+            Box::new(Ident("z".to_string()))
         ),
         parse_exprs_helper(&"(x y) z")
     );
     assert_eq!(
         Apply(
-            Box::new(Atom(Ident("x".to_string()))),
+            Box::new(Ident("x".to_string())),
             Box::new(Apply(
-                Box::new(Atom(Ident("y".to_string()))),
-                Box::new(Atom(Ident("z".to_string())))
+                Box::new(Ident("y".to_string())),
+                Box::new(Ident("z".to_string()))
             ))
         ),
         parse_exprs_helper(&"x (y z)")
     );
     assert_eq!(
         Apply(
-            Box::new(Atom(Ident("x".to_string()))),
-            Box::new(Tuple(vec!(
-                Atom(Ident("y".to_string())),
-                Atom(Ident("z".to_string()))
-            )))
+            Box::new(Ident("x".to_string())),
+            Box::new(Tuple(vec!(Ident("y".to_string()), Ident("z".to_string()))))
         ),
         parse_exprs_helper(&"x (y, z)")
     );
     assert_eq!(
-        Lambda("f".to_string(), Box::new(Atom(Ident("x".to_string())))),
+        Lambda("f".to_string(), Box::new(Ident("x".to_string()))),
         parse_exprs_helper(&"lambda f -> x")
     );
     assert_eq!(
         Let(
             vec!(("x".to_string(), Atom(Int(42)))),
-            Box::new(Atom(Ident("x".to_string())))
+            Box::new(Ident("x".to_string()))
         ),
         parse_exprs_helper(&"let x = 42 in x end")
     );
@@ -145,10 +142,7 @@ fn parse_insert() {
     assert_eq!(
         Insert(
             "x".to_string(),
-            Apply(
-                Box::new(Atom(Ident("f".to_string()))),
-                Box::new(Atom(Int(4)))
-            )
+            Apply(Box::new(Ident("f".to_string())), Box::new(Atom(Int(4))))
         ),
         super::parse_insert(
             Parser::parse(Rule::insert, &"insert f 4 into x")
@@ -345,8 +339,8 @@ fn parse_case() {
             Expr::Case(
                 Box::new(Expr::Atom(Atom::Int(42))),
                 vec!((
-                    Pattern::Atom(Atom::Ident("i".to_string())),
-                    Expr::Atom(Atom::Ident("i".to_string()))
+                    Pattern::Ident("i".to_string()),
+                    Expr::Ident("i".to_string())
                 ))
             )
         ),
@@ -360,10 +354,10 @@ fn parse_case() {
                 Box::new(Expr::Atom(Atom::Int(42))),
                 vec!((
                     Pattern::Tuple(vec!(
-                        Pattern::Atom(Atom::Ident("i".to_string())),
-                        Pattern::Atom(Atom::Ident("j".to_string()))
+                        Pattern::Ident("i".to_string()),
+                        Pattern::Ident("j".to_string())
                     )),
-                    Expr::Atom(Atom::Ident("j".to_string()))
+                    Expr::Ident("j".to_string())
                 ))
             )
         ),
@@ -375,7 +369,7 @@ fn parse_case() {
             String::from("x"),
             Expr::Case(
                 Box::new(Expr::Atom(Atom::Int(42))),
-                vec!((Pattern::Wildcard, Expr::Atom(Atom::Ident("j".to_string()))))
+                vec!((Pattern::Wildcard, Expr::Ident("j".to_string())))
             )
         ),
         parse("let x = case 42 of _ => j end").unwrap()
@@ -389,12 +383,9 @@ fn parse_case() {
                 vec!((
                     Pattern::Record(vec!(
                         (String::from("i"), Pattern::Wildcard),
-                        (
-                            String::from("j"),
-                            Pattern::Atom(Atom::Ident("j".to_string()))
-                        )
+                        (String::from("j"), Pattern::Ident("j".to_string()))
                     )),
-                    Expr::Atom(Atom::Ident("j".to_string()))
+                    Expr::Ident("j".to_string())
                 ))
             )
         ),

@@ -17,13 +17,13 @@ pub fn eval_atom(env: &Environment, atom: &Atom) -> Result<Object> {
         Atom::Bool(b) => Ok(Object::Bool(*b)),
         Atom::Unit => Ok(Object::Unit),
         Atom::String(s) => Ok(Object::String(s.clone())),
-        Atom::Ident(ident) => env.lookup(&ident).map(|x| x.clone()),
     }
 }
 
 pub fn eval(env: &Environment, expr: Expr) -> Result<Object> {
     match expr {
         Expr::Atom(atom) => Ok(eval_atom(env, &atom)?),
+        Expr::Ident(ident) => env.lookup(&ident).map(|x| x.clone()),
         Expr::Tuple(exprs) => Ok(Object::Tuple(
             exprs
                 .into_iter()
@@ -80,7 +80,7 @@ pub fn eval(env: &Environment, expr: Expr) -> Result<Object> {
 
 fn match_pat(env: &Environment, pat: &Pattern, obj: &Object) -> Option<Environment> {
     match (pat, obj) {
-        (Pattern::Atom(Atom::Ident(ident)), _) => Some(env.insert(&ident, obj.clone())),
+        (Pattern::Ident(ident), _) => Some(env.insert(&ident, obj.clone())),
         (Pattern::Atom(atom), _) => {
             if &eval_atom(&env, atom).ok()? == obj {
                 Some(env.clone())
