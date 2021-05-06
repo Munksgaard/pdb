@@ -1,4 +1,5 @@
 use super::*;
+use std::collections::HashMap;
 
 #[test]
 fn ty_fv() {
@@ -347,7 +348,7 @@ fn infer_and_print() {
 }
 
 #[test]
-fn parse_and_infer() {
+fn infer_fail() {
     use pest::Parser;
     fn infer(input: &str) -> Result<Ty, String> {
         let e = crate::parse::parse_exprs(
@@ -366,6 +367,19 @@ fn parse_and_infer() {
         )
     }
 
+    assert!(infer("case 42 of True => () end").is_err());
+
+    assert!(infer("case 42 of 41 => () | () => 42 end").is_err());
+
+    assert!(infer("case 42 of 41 => () | 42 => 42 end").is_err());
+
+    assert!(infer("case 42 of 41 => () | 42 => True end").is_err());
+
+    assert!(infer(
+        "case { x = 42, y = True } of { x = 42, y = _ } => 42 | { x = i, y = _ } => True end"
+    )
+    .is_err());
+
     assert!(infer("lambda x -> x x").is_err());
 
     assert!(infer("case 42 of (i, j) => i end").is_err());
@@ -373,4 +387,29 @@ fn parse_and_infer() {
     assert!(infer("case 0 of True => True | \"string\" => \"foo\" end").is_err(),);
 
     assert!(infer("case (1337, 42) of (0, False) => True | (1337, i) => i end").is_err());
+
+    assert!(infer("case (1337, 42) of (0, False) => True | (1337, i) => False end").is_err());
+}
+
+#[test]
+fn infer_fail2() {
+    use pest::Parser;
+    fn infer(input: &str) -> Result<Ty, String> {
+        let e = crate::parse::parse_exprs(
+            crate::parse::Parser::parse(crate::parse::Rule::expr, input)
+                .unwrap_or_else(|e| panic!("{}", e))
+                .next()
+                .unwrap()
+                .into_inner(),
+        )
+        .unwrap();
+        super::infer(
+            &mut HashMap::new(),
+            &mut NameSource::new(),
+            &mut HashMap::new(),
+            &e,
+        )
+    }
+
+    assert!(infer("case 42 of 41 => () | 42 => 42 end").is_err());
 }

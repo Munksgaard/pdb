@@ -333,6 +333,8 @@ fn parse_letdecl() {
 
 #[test]
 fn parse_case() {
+    use crate::ast::Atom;
+
     assert_eq!(
         Statement::Let(
             String::from("x"),

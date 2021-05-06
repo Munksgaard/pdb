@@ -163,7 +163,6 @@ pub fn infer(
 
             // Bind the result to a fresh type variable
             let fresh = name_src.fresh("case");
-            let result_ty = Ty::Var(fresh.clone());
 
             for (pat, e) in matches {
                 // verify that pat unifies with ty
@@ -181,11 +180,18 @@ pub fn infer(
                     env.insert(ident.to_string(), scheme);
                 }
 
+                let result_ty = global_sub
+                    .get(&fresh)
+                    .cloned()
+                    .unwrap_or(Ty::Var(fresh.clone()));
+
                 // the type of e
                 let e_ty = infer(global_sub, name_src, &env, e)?;
+
                 // Verify e_ty unifies with result_ty and insert substs?
-                let e_substs = unify(iter::once((e_ty, result_ty.clone())))
-                    .collect::<Result<Vec<_>, String>>()?;
+                let e_substs =
+                    unify(iter::once((e_ty, result_ty))).collect::<Result<Vec<_>, String>>()?;
+
                 // Insert substs in global_sub?
                 for (ident, ty) in e_substs {
                     global_sub.insert(ident, ty);
