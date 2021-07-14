@@ -183,7 +183,7 @@ pub fn infer(
                 let result_ty = global_sub
                     .get(&fresh)
                     .cloned()
-                    .unwrap_or(Ty::Var(fresh.clone()));
+                    .unwrap_or_else(|| Ty::Var(fresh.clone()));
 
                 // the type of e
                 let e_ty = infer(global_sub, name_src, &env, e)?;
@@ -299,6 +299,10 @@ impl Substitute for Ty {
                 Box::new(lhs.apply(substitution)),
                 Box::new(rhs.apply(substitution)),
             ),
+            Ty::Defined(name, args) => Ty::Defined(
+                name.clone(),
+                args.iter().map(|x| x.apply(substitution)).collect(),
+            ),
         }
     }
 }
@@ -379,6 +383,7 @@ impl FreeVars for Ty {
             Ty::Record(recs) => Box::new(recs.iter().flat_map(|(_, x)| x.fv())),
             Ty::Var(ident) => Box::new(iter::once(ident.clone())),
             Ty::Fun(lhs, rhs) => Box::new(lhs.fv().chain(rhs.fv())),
+            Ty::Defined(_, args) => Box::new(args.iter().flat_map(|arg| arg.fv())),
         }
     }
 }

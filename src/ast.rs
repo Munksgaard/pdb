@@ -14,6 +14,7 @@ pub enum Ty {
     Unit,
     String,
     Record(Vec<(Ident, Ty)>),
+    Defined(Ident, Vec<Ty>),
     Var(Ident),
     Fun(Box<Ty>, Box<Ty>),
 }
@@ -49,6 +50,13 @@ impl fmt::Display for Ty {
             }
             Ty::Var(ident) => write!(f, "{}", ident),
             Ty::Fun(lhs, rhs) => write!(f, "({} -> {})", lhs, rhs), // TODO: Handle parenthesis
+            Ty::Defined(name, args) => {
+                write!(f, "{}", name)?;
+                for arg in args {
+                    write!(f, " {}", arg)?;
+                }
+                Ok(())
+            }
         }
     }
 }
@@ -183,6 +191,7 @@ pub enum Statement {
     Insert(Ident, Expr),
     Select(Ident),
     Let(Ident, Expr),
+    Union(Ident, Vec<Ident>, Vec<(Ident, Vec<Ty>)>),
 }
 
 impl fmt::Display for Statement {
@@ -192,6 +201,23 @@ impl fmt::Display for Statement {
             Statement::Insert(ident, expr) => write!(f, "insert {} into {}", expr, ident),
             Statement::Select(ident) => write!(f, "select from {}", ident),
             Statement::Let(ident, expr) => write!(f, "let {} = {}", ident, expr),
+            Statement::Union(ident, args, variants) => {
+                write!(f, "type {}", ident)?;
+                for arg in args {
+                    write!(f, " {}", arg)?;
+                }
+                write!(f, " =")?;
+                for (i, (name, types)) in variants.iter().enumerate() {
+                    if i != 0 {
+                        write!(f, " |")?;
+                    }
+                    write!(f, " {}", name)?;
+                    for t in types {
+                        write!(f, " {}", t)?;
+                    }
+                }
+                Ok(())
+            }
         }
     }
 }

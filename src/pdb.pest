@@ -1,10 +1,12 @@
 WHITESPACE = _{ " " | "\n" }
 
-keyword = { "let" | "insert" | "select" | "from" | "into" | "create" | "end" | "lambda" | "in" | "case" | "of" }
+keyword = { "let" | "insert" | "select" | "from" | "into" | "create" | "end" | "lambda" | "in" | "case" | "of" | "type" }
 
 identifier = @{ !keyword ~ ('a'..'z' ~ ASCII_ALPHANUMERIC*) }
 
 tyident = @{ 'A'..'Z' ~ ASCII_ALPHANUMERIC* }
+
+longtyident = { tyident ~ tyterm+ }
 
 unit = { "()" }
 
@@ -14,9 +16,16 @@ tyrecord = { "{" ~ identifier ~ ":" ~ ty ~ ("," ~ identifier ~ ":" ~ ty)* ~ ","?
 
 tyfun = { tyterm ~ "->" ~ ty }
 
-tyterm = _{ tyident | "(" ~ ty ~ ")" }
+tyterm = { unit | tytuple | tyrecord | identifier | tyident | "(" ~ ty ~ ")" }
 
-ty = { tyfun | unit | tytuple | tyrecord | tyterm }
+tycon = { tyident ~ tyterm* }
+
+datatype = { "type" ~ tyident ~ identifier* ~ "=" ~
+             "|"? ~ tycon ~
+             ("|" ~ tycon)*
+}
+
+ty = { longtyident | tyfun | tyterm }
 
 int = @{
     "-"?
@@ -67,4 +76,4 @@ select = { "select" ~ "from" ~ identifier }
 
 create = { "create" ~ "table" ~ identifier ~ ty }
 
-statement = _{ SOI ~ (create | insert | select | letdecl) ~ EOI }
+statement = _{ SOI ~ (create | insert | select | letdecl | datatype) ~ EOI }

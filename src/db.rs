@@ -1,4 +1,4 @@
-use crate::ast::{Ident, Statement, TableDefinition};
+use crate::ast::{Ident, Statement, TableDefinition, Ty};
 use crate::environment::Environment;
 use crate::eval::eval;
 use crate::name_source::NameSource;
@@ -14,6 +14,7 @@ pub struct Env {
     ty_env: ty::Env,
     env: Environment,
     tables: Tables,
+    constructors: HashMap<Ident, (Vec<Ty>, Ident)>,
 }
 
 pub fn eval_stm(env: &mut Env, stm: Statement) -> Result<String> {
@@ -37,7 +38,7 @@ pub fn eval_stm(env: &mut Env, stm: Statement) -> Result<String> {
                 )
                 .map_err(|e| anyhow!("{}", e))?;
 
-                if ty::unify(std::iter::once((ty.clone(), def.ty.clone()))).all(|x| x.is_ok()) {
+                if ty::unify(std::iter::once((ty, def.ty.clone()))).all(|x| x.is_ok()) {
                     let result = eval(&env.env, expr)?;
                     objs.push(result);
                     Ok(String::from("Inserted 1\n"))
@@ -81,6 +82,13 @@ pub fn eval_stm(env: &mut Env, stm: Statement) -> Result<String> {
 
             Ok(format!("{}: {}\n", ident, ty))
         }
+        Statement::Union(name, _args, variants) => {
+            for (variant_name, tyargs) in variants {
+                env.constructors
+                    .insert(variant_name.clone(), (tyargs.clone(), name.clone()));
+            }
+            Ok(String::from("Ok\n"))
+        }
     }
 }
 
@@ -89,6 +97,7 @@ pub fn start(rx: Receiver<(Statement, Sender<Result<String>>)>) -> Result<()> {
         ty_env: HashMap::new(),
         env: Environment::new(),
         tables: Vec::new(),
+        constructors: HashMap::new(),
     };
 
     loop {

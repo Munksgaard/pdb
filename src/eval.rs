@@ -8,7 +8,7 @@ use std::rc::Rc;
 #[cfg(test)]
 mod test;
 
-pub fn eval_atom(env: &Environment, atom: &Atom) -> Result<Object> {
+pub fn eval_atom(_env: &Environment, atom: &Atom) -> Result<Object> {
     match atom {
         Atom::Int(i) => {
             let res = Object::Int(*i);

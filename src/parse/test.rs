@@ -1,37 +1,47 @@
+use pretty_assertions::assert_eq;
+
 use super::Ty;
 use super::*;
 
-fn parse_ty_helper(input: &str) -> Ty {
-    super::parse_ty(Parser::parse(Rule::ty, input).unwrap().next().unwrap()).unwrap()
+fn parse_ty_helper(input: &str) -> Result<Ty, Error<Rule>> {
+    super::parse_ty(
+        Parser::parse(Rule::ty, input)
+            .unwrap()
+            .next()
+            .unwrap()
+            .into_inner(),
+    )
 }
 
 #[test]
-fn parse_ty() {
+fn parse_ty() -> Result<(), Error<Rule>> {
     use Ty::*;
 
-    assert_eq!(Int, parse_ty_helper(&"((Int))"));
-    assert_eq!(Bool, parse_ty_helper(&"Bool"));
-    assert_eq!(Tuple(vec!(Int, Bool)), parse_ty_helper(&"((Int, Bool))"));
-    assert_eq!(Unit, parse_ty_helper(&"()"));
-    assert_eq!(String, parse_ty_helper(&"String"));
-    assert_eq!(Var("Foo".to_string()), parse_ty_helper(&"Foo"));
-    assert_eq!(Int, parse_ty_helper(&"((Int))"));
+    assert_eq!(Int, parse_ty_helper(&"((Int))")?);
+    assert_eq!(Bool, parse_ty_helper(&"Bool")?);
+    assert_eq!(Tuple(vec!(Int, Bool)), parse_ty_helper(&"((Int, Bool))")?);
+    assert_eq!(Unit, parse_ty_helper(&"()")?);
+    assert_eq!(String, parse_ty_helper(&"String")?);
+    assert_eq!(Defined("Foo".to_string(), vec!()), parse_ty_helper(&"Foo")?);
+    assert_eq!(Int, parse_ty_helper(&"((Int))")?);
     assert_eq!(
         Fun(Box::new(Int), Box::new(Int)),
-        parse_ty_helper(&"(Int -> Int)")
+        parse_ty_helper(&"(Int -> Int)")?
     );
     assert_eq!(
         Fun(Box::new(Fun(Box::new(Int), Box::new(Int))), Box::new(Int)),
-        parse_ty_helper(&"(Int -> Int) -> Int")
+        parse_ty_helper(&"(Int -> Int) -> Int")?
     );
     assert_eq!(
         Fun(Box::new(Int), Box::new(Fun(Box::new(Int), Box::new(Int)))),
-        parse_ty_helper(&"Int -> Int -> Int")
+        parse_ty_helper(&"Int -> Int -> Int")?
     );
     assert_eq!(
         Fun(Box::new(Int), Box::new(Fun(Box::new(Int), Box::new(Int)))),
-        parse_ty_helper(&"Int -> (Int -> Int)")
+        parse_ty_helper(&"Int -> (Int -> Int)")?
     );
+
+    Ok(())
 }
 
 fn parse_exprs_helper(input: &str) -> Expr {
@@ -392,5 +402,53 @@ fn parse_case() {
             )
         ),
         parse("let x = case 42 of { i = _, j = j } => j end").unwrap()
+    );
+}
+
+#[test]
+fn parse_typedecl() {
+    assert_eq!(
+        Statement::Union(
+            String::from("Option"),
+            vec!(),
+            vec!(
+                ("Some".to_string(), vec!(Ty::Int)),
+                ("Nothing".to_string(), vec!())
+            )
+        ),
+        parse("type Option = Some Int | Nothing").unwrap()
+    );
+
+    assert_eq!(
+        Statement::Union(
+            String::from("List"),
+            vec!(),
+            vec!(
+                (
+                    "Cons".to_string(),
+                    vec!(Ty::Int, Ty::Defined("List".to_string(), vec!()))
+                ),
+                ("Nil".to_string(), vec!())
+            )
+        ),
+        parse("type List = Cons Int List | Nil").unwrap()
+    );
+
+    assert_eq!(
+        Statement::Union(
+            String::from("List"),
+            vec!(String::from("a")),
+            vec!(
+                (
+                    "Cons".to_string(),
+                    vec!(
+                        Ty::Var(String::from("a")),
+                        Ty::Defined("List".to_string(), vec!())
+                    )
+                ),
+                ("Nil".to_string(), vec!())
+            )
+        ),
+        parse("type List a = Cons a List | Nil").unwrap()
     );
 }
